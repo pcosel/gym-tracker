@@ -13,15 +13,15 @@
 ## 3. Publish
 
 - [x] 3.1 Commit the files from group 2 on `main`. Do not push. Verify that `git log -1` shows the commit and `git status` reports a clean working tree.
-- [ ] 3.2 (Manual, user) Push `main` to `origin`. Verify that `git log origin/main -1` shows the commit from 3.1 and that the `pages-build-deployment` run for it succeeds in the repository's Actions tab.
+- [x] 3.2 (Manual, user) Push `main` to `origin`. Verify that `git log origin/main -1` shows the commit from 3.1 and that the `pages-build-deployment` run for it succeeds in the repository's Actions tab.
 
 ## 4. Live verification
 
 These checks run against the deployed site after the push in 3.2, so they are checked off in a follow-up commit. Set `SITE` to the HTTPS URL shown in task 1.1.
 
-- [ ] 4.1 Check the "Site is publicly reachable" requirement: `curl -sI "$SITE"` returns `HTTP/2 200`, and `curl -sI "${SITE/https:/http:}"` returns a 301 to the HTTPS URL.
-- [ ] 4.2 Check the "Entry page identifies the app" requirement: open the URL in a browser (or private window) and confirm the tab title and heading both read "Gym Tracker".
-- [ ] 4.3 Check that files are served as-is (the "Site publishes from the main branch" requirement): `curl -s "$SITE"` returns the committed `index.html` byte-for-byte, and `curl -s "${SITE}README.md"` returns raw Markdown rather than Jekyll-rendered HTML.
+- [x] 4.1 Check the "Site is publicly reachable" requirement: `curl -sI "$SITE"` returns `HTTP/2 200`, and `curl -sI "${SITE/https:/http:}"` returns a 301 to the HTTPS URL.
+- [x] 4.2 Check the "Entry page identifies the app" requirement: open the URL in a browser (or private window) and confirm the tab title and heading both read "Gym Tracker".
+- [x] 4.3 Check that files are served as-is (the "Site publishes from the main branch" requirement): `curl -s "$SITE"` returns the committed `index.html` byte-for-byte, and `curl -s "${SITE}README.md"` returns raw Markdown rather than Jekyll-rendered HTML.
 
 ## Workflow follow-up
 
