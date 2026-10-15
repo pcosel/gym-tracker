@@ -74,16 +74,20 @@ Groups 2–4 are implemented in the git worktree above, forked from `main`. Serv
 
 ## 5. Merge and publish
 
-- [ ] 5.1 Commit all work in the worktree, then fast-forward `main` to the worktree branch from the main checkout (`git merge --ff-only worktree-connect-google-sheet`). Do not push. Verify that `git log main -1` matches the worktree branch head and that `git status` is clean on `main`.
-- [ ] 5.2 (Manual, user) Push `main` to `origin`. Verify that the `pages-build-deployment` run for that commit succeeds in the repository's Actions tab.
+- [x] 5.1 Commit all work in the worktree, then fast-forward `main` to the worktree branch from the main checkout (`git merge --ff-only worktree-connect-google-sheet`). Do not push. Verify that `git log main -1` matches the worktree branch head and that `git status` is clean on `main`.
+- [x] 5.2 (Manual, user) Push `main` to `origin`. Verify that the `pages-build-deployment` run for that commit succeeds in the repository's Actions tab.
 
 ## 6. Live verification
 
 These checks run against the deployed site after the push in 5.2, so they are checked off in a follow-up commit. Set `SITE` to `https://<owner>.github.io/<repo>/`.
 
-- [ ] 6.1 Verify that the `web-hosting` requirements still hold. `curl -sI "$SITE"` returns HTTP 200. `curl -s "$SITE"` contains `<title>Gym Tracker</title>` and `<h1>Gym Tracker</h1>`. `curl -s "${SITE}app.js"` is byte-identical to the committed `app.js`, which confirms it is served as-is.
-- [ ] 6.2 On a desktop browser at `$SITE`, sign in. The connected screen shows the sheet's title and the email next to "Sign out". Reload: the session is restored. Sign out: the sign-in screen appears. Verify that the browser console shows no errors throughout.
-- [ ] 6.3 (Manual, user) On your phone, open `$SITE` in the browser you will use at the gym, and also from a home-screen shortcut if you plan to use one. Tap "Sign in with Google": the connected screen appears. Then reload, and record whether the session was restored silently or fell back to the sign-in screen. If it fell back, tap "Sign in with Google" once: the popup should close by itself without the account chooser and the connected screen should appear. Verify that tap-initiated sign-in works and that the reload outcome is written into this task line. If tap-initiated sign-in itself fails, stop and raise switching to the redirect flow (design.md, "GIS token model") as a follow-up change.
+- [x] 6.1 Verify that the `web-hosting` requirements still hold. `curl -sI "$SITE"` returns HTTP 200. `curl -s "$SITE"` contains `<title>Gym Tracker</title>` and `<h1>Gym Tracker</h1>`. `curl -s "${SITE}app.js"` is byte-identical to the committed `app.js`, which confirms it is served as-is.
+- [x] 6.2 On a desktop browser at `$SITE`, sign in. The connected screen shows the sheet's title and the email next to "Sign out". Reload: the session is restored. Sign out: the sign-in screen appears. Verify that the browser console shows no errors throughout.
+
+  Recorded: passed on `https://pcosel.github.io/gym-tracker/` (title shown, email next to "Sign out", restored on reload, sign-out clears storage). The console held no errors from this app's code. Its only errors were a 404 for `/favicon.ico` and Google's own `gsi/client` "Cross-Origin-Opener-Policy would block the window.closed call" messages, which appear while its popup is open.
+- [x] 6.3 (Manual, user) On your phone, open `$SITE` in the browser you will use at the gym, and also from a home-screen shortcut if you plan to use one. Tap "Sign in with Google": the connected screen appears. Then reload, and record whether the session was restored silently or fell back to the sign-in screen. If it fell back, tap "Sign in with Google" once: the popup should close by itself without the account chooser and the connected screen should appear. Verify that tap-initiated sign-in works and that the reload outcome is written into this task line. If tap-initiated sign-in itself fails, stop and raise switching to the redirect flow (design.md, "GIS token model") as a follow-up change.
+
+  Recorded: tested in Chrome on a phone, both in the browser and from a home-screen shortcut, with the same result. Sign-in by tap works. On reload the silent restore was blocked ("Pop-up blockiert") and the page fell back to the sign-in screen. One tap on "Sign in with Google" then closed the popup by itself, with no account chooser, and returned to the connected screen.
 
 ## Workflow follow-up
 

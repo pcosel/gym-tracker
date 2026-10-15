@@ -28,7 +28,7 @@ The page always shows the "Gym Tracker" header and exactly one of five screens:
 - **If Google itself is signed out**, the silent restore still opens a popup, now showing Google's login. The page waits on "Restoring your session…" until you log in, which restores the session, or close the popup, which leads to the sign-in screen with no error.
 - **Sign-out revokes, expiry does not.** "Sign out" and "Use a different account" revoke the app's grant with Google and forget the remembered email, so the next sign-in shows the consent prompt again. An expired session does not revoke anything, so recovering from it costs one tap.
 
-On desktop Chromium, neither silent path was blocked. The "blocked" fallback was tested by forcing the popup to fail. How phone browsers behave is checked on a real phone after deployment.
+On desktop Chromium, neither silent path was blocked. The "blocked" fallback was tested there by forcing the popup to fail. On a phone, Chrome blocks the silent restore on reload ("Pop-up blockiert"), both in the browser and from a home-screen shortcut. The page shows the sign-in screen, and one tap on "Sign in with Google" signs the remembered account back in without the account chooser.
 
 ## Google Cloud setup
 
