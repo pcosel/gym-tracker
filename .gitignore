@@ -1,0 +1,3 @@
+# Git worktrees used for implementation live here. Ignoring them keeps their
+# contents out of commits, and so out of the files GitHub Pages publishes.
+/.claude/worktrees

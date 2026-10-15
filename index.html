@@ -6,7 +6,44 @@
   <title>Gym Tracker</title>
 </head>
 <body>
-  <h1>Gym Tracker</h1>
-  <p>Coming soon: track your workouts here.</p>
+  <header>
+    <h1>Gym Tracker</h1>
+    <div id="account" hidden>
+      <span id="account-email"></span>
+      <button type="button" id="sign-out">Sign out</button>
+    </div>
+  </header>
+
+  <p id="error" role="alert" hidden></p>
+
+  <section id="screen-config" hidden>
+    <h2>Not configured</h2>
+    <p>These settings in <code>config.js</code> are still blank:</p>
+    <ul id="missing-keys"></ul>
+  </section>
+
+  <section id="screen-signin" hidden>
+    <p>Sign in to connect your gym spreadsheet.</p>
+    <button type="button" id="sign-in">Sign in with Google</button>
+  </section>
+
+  <section id="screen-checking" hidden>
+    <p id="checking-text">Loading…</p>
+  </section>
+
+  <section id="screen-denied" hidden>
+    <h2>No access</h2>
+    <p>
+      <strong id="denied-email">This account</strong> cannot open the gym
+      spreadsheet. It does not exist, or it is not shared with this account.
+    </p>
+    <button type="button" id="use-different-account">Use a different account</button>
+  </section>
+
+  <section id="screen-app" hidden>
+    <p>Connected to: <strong id="sheet-title"></strong></p>
+  </section>
+
+  <script type="module" src="./app.js"></script>
 </body>
 </html>
