@@ -152,17 +152,17 @@ Groups 1–5 are implemented in the git worktree above, on branch `worktree-read
 ## 6. Merge and publish
 
 - [x] 6.1 Run `npm test`, then commit all work in the worktree. From the main checkout, fast-forward `main` to the worktree branch (`git merge --ff-only worktree-read-write-sheet`). Do not push. Verify that `git log main -1` matches the worktree branch head, and that `git status` on `main` is clean.
-- [ ] 6.2 (Manual, user) Push `main` to `origin`. Verify that the `pages-build-deployment` run for that commit succeeds in the repository's Actions tab.
+- [x] 6.2 (Manual, user) Push `main` to `origin`. Verify that the `pages-build-deployment` run for that commit succeeds in the repository's Actions tab.
 
 ## 7. Live verification
 
 These checks run against the deployed site after 6.2, so they are checked off in a follow-up commit. Set `SITE` to `https://pcosel.github.io/gym-tracker/`.
 
-- [ ] 7.1 Verify that the `web-hosting` requirements still hold:
+- [x] 7.1 Verify that the `web-hosting` requirements still hold:
   - `curl -sI "$SITE"` returns HTTP 200;
   - `curl -s "$SITE"` contains `<title>Gym Tracker</title>` and `<h1>Gym Tracker</h1>`;
   - `curl -s "${SITE}config.js"` is byte-identical to the committed `config.js`.
-- [ ] 7.2 Read-only check on a desktop browser at `$SITE`. Sign in. The workout screen shows the real sheet's title and today's date. Every `sheets.googleapis.com` request carries the production ID, as in the scenario "Live site uses the production sheet". Enter nothing: the Network tab shows no `values:batchUpdate`. Verify that the browser console shows no errors from this app's code.
+- [x] 7.2 Read-only check on a desktop browser at `$SITE`. Sign in. The workout screen shows the real sheet's title and today's date. Every `sheets.googleapis.com` request carries the production ID, as in the scenario "Live site uses the production sheet". Enter nothing: the Network tab shows no `values:batchUpdate`. Verify that the browser console shows no errors from this app's code.
 - [ ] 7.3 (Manual, user) At the next workout, log it with the app on the phone. Afterwards, check in Google Sheets that today's row holds the entries in the usual notation and that no other row changed. Record in this task whether the session expired during the workout, and whether "Sign in to save" recovered it with one tap.
 
 ## Workflow follow-up
