@@ -6,7 +6,7 @@ A simple web app for tracking gym workouts. Live site: https://pcosel.github.io/
 
 - **No backend.** The page is static. It signs in with Google Identity Services, which gives the browser a short-lived access token, and calls the Google Sheets REST API directly with the user's own token. There is no server and no client secret.
 - **Drive sharing is the security boundary.** The spreadsheet is private in Google Drive, and only accounts it is shared with can read it. The in-app check only decides what the page renders. The client ID and spreadsheet ID are public, so never switch the sheet's sharing to "Anyone with the link".
-- **The token stays in memory.** The site shares its origin, `https://pcosel.github.io`, with every other project site of the same owner, and so shares their `localStorage`. A token written to storage could be read by any of them. The only value stored is the signed-in email address, under `gymTracker.lastEmail`.
+- **The token is kept in memory and in the tab's `sessionStorage`, never in `localStorage`.** The site shares its origin, `https://pcosel.github.io`, with every other project site of the same owner, and so shares their `localStorage`. A token written there could be read by any of them, from any tab. `sessionStorage` belongs to one tab: it survives a reload of that tab, is gone when the tab closes, and another site could read it only by running in that same tab. The entry `gymTracker.session` holds the token, its expiry time and the email, and is removed on sign-out and when the session expires. The only value in `localStorage` is the signed-in email address, under `gymTracker.lastEmail`.
 - **Access check.** After signing in, the app requests the spreadsheet's title (`fields=properties.title`, so no cell data) before showing anything from the sheet.
 
 The page always shows the "Gym Tracker" header and exactly one of five screens:
@@ -22,13 +22,15 @@ The page always shows the "Gym Tracker" header and exactly one of five screens:
 ## Sessions
 
 - **The token lasts about an hour.** Google issues a short-lived access token and no refresh token, so the app has to ask for a new one now and then.
-- **Silent restore on reload.** If an email is remembered, the app asks Google for a new token on page load, without the consent prompt. Google's popup opens, closes by itself and the connected screen appears, with no tap. With no remembered email, such as on a first visit, the app does not contact Google for a token.
+- **Reload in the same tab reuses the token.** If the tab holds a token for the remembered account with more than five minutes left, the app uses it and makes no request to Google for a token, so no popup opens. A new tab, such as a home-screen shortcut, does not get it.
+- **Silent restore otherwise.** In a new tab, or when the stored token has five minutes or less left, the app asks Google for a new token on page load, if an email is remembered, without the consent prompt. Google's popup opens, closes by itself and the connected screen appears, with no tap. With no remembered email, such as on a first visit, the app does not contact Google for a token.
 - **Silent renewal on 401.** If Google rejects a request because the token has expired, the app renews it the same way and repeats the request once. If renewal fails, it shows the sign-in screen with "Your session expired", and keeps the remembered email and the grant.
+- **Phone setup for the silent paths.** In Chrome, tap "Always show" ("Immer anzeigen") on the "Pop-up blocked" bar, or allow pop-ups for the site under Chrome's site settings. Without that, silent restore and renewal are blocked.
 - **One tap is the fallback.** Both silent paths open a popup without a fresh tap, which a browser may block. Phone browsers and iOS home-screen shortcuts are the likely cases. The app then shows the sign-in screen without an error. For a remembered account, one tap on "Sign in with Google" closes the popup by itself, with no account chooser. With no remembered account, Google shows its account chooser.
 - **If Google itself is signed out**, the silent restore still opens a popup, now showing Google's login. The page waits on "Restoring your session…" until you log in, which restores the session, or close the popup, which leads to the sign-in screen with no error.
 - **Sign-out revokes, expiry does not.** "Sign out" and "Use a different account" revoke the app's grant with Google and forget the remembered email, so the next sign-in shows the consent prompt again. An expired session does not revoke anything, so recovering from it costs one tap.
 
-On desktop Chromium, neither silent path was blocked. The "blocked" fallback was tested there by forcing the popup to fail. On a phone, Chrome blocks the silent restore on reload ("Pop-up blockiert"), both in the browser and from a home-screen shortcut. The page shows the sign-in screen, and one tap on "Sign in with Google" signs the remembered account back in without the account chooser.
+On desktop Chromium, neither silent path was blocked. The "blocked" fallback was tested there by forcing the popup to fail. On a phone without the pop-up setting above, Chrome blocks the silent restore on reload ("Pop-up blockiert"), both in the browser and from a home-screen shortcut. The page shows the sign-in screen, and one tap on "Sign in with Google" signs the remembered account back in without the account chooser.
 
 ## Google Cloud setup
 
@@ -55,7 +57,7 @@ The app asks for `spreadsheets` rather than `drive` or `spreadsheets.readonly`:
 - Not `spreadsheets.readonly`, because writing workouts to the sheet is planned. Asking for write access now avoids a second consent prompt and a scope change in the console later.
 - Not `drive`. That scope is "restricted" and is only needed to search folders or copy files. Reaching one sheet by its ID needs neither. `spreadsheets` is only a "sensitive" scope, so a Testing app just shows the usual "unverified app" warning.
 
-The token can read and write all of the signed-in user's spreadsheets, not only this one. The code addresses only the configured ID, the token stays in memory, and nothing from the sheet is ever inserted as HTML.
+The token can read and write all of the signed-in user's spreadsheets, not only this one. The code addresses only the configured ID, the token is kept only in memory and the tab's `sessionStorage`, and nothing from the sheet is ever inserted as HTML.
 
 ## Running locally
 
@@ -76,7 +78,7 @@ Then open http://localhost:8000.
 |---|---|
 | `index.html` | The header and the five screens, all hidden by default. Loads `app.js`. |
 | `config.js` | The OAuth client ID and the spreadsheet ID, plus a check for blank entries. |
-| `auth.js` | Google sign-in: loads Google Identity Services, gets, renews and revokes the access token, and remembers the signed-in email. |
+| `auth.js` | Google sign-in: loads Google Identity Services, gets, renews and revokes the access token, keeps the token for the tab, and remembers the signed-in email. |
 | `api.js` | Calls Google APIs with the access token, turns failures into typed errors, and checks access to the spreadsheet. |
 | `app.js` | Starts the app and switches between the screens. |
 | `.gitignore` | Keeps `.claude/worktrees` out of commits, and so out of what Pages publishes. |
