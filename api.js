@@ -1,5 +1,6 @@
 import { CONFIG } from './config.js';
 import { getToken, refreshToken } from './auth.js';
+import { quoteTab, rangeFor } from './sheet-format.js';
 
 const SHEETS_URL = 'https://sheets.googleapis.com/v4/spreadsheets';
 
@@ -63,10 +64,41 @@ export async function apiFetch(url, options = {}) {
   return response.status === 204 ? null : response.json();
 }
 
-// The field mask keeps cell data out of the response: the title is all the
-// connected screen shows, and it proves access.
+function spreadsheetUrl() {
+  return `${SHEETS_URL}/${encodeURIComponent(CONFIG.SPREADSHEET_ID)}`;
+}
+
+// The field mask keeps cell data out of the response: the title proves access,
+// and the tab titles tell whether this year's tab exists.
 export async function probeSpreadsheet() {
-  const id = encodeURIComponent(CONFIG.SPREADSHEET_ID);
-  const data = await apiFetch(`${SHEETS_URL}/${id}?fields=properties.title`);
-  return { title: data.properties.title };
+  const data = await apiFetch(`${spreadsheetUrl()}?fields=properties.title,sheets.properties.title`);
+  return {
+    title: data.properties.title,
+    tabs: (data.sheets || []).map((sheet) => sheet.properties.title),
+  };
+}
+
+// The whole tab as Google Sheets displays it (so a reps cell stored as a date
+// reads "10, 8, 07"). Rows are arrays of strings, with trailing empty cells
+// and rows trimmed: index i is sheet row i + 1.
+export async function readTab(title) {
+  const range = encodeURIComponent(quoteTab(title));
+  const data = await apiFetch(`${spreadsheetUrl()}/values/${range}`);
+  return data.values || [];
+}
+
+// Writes cells as plain text (RAW), so Google Sheets never turns "12, 10, 10"
+// into a date. Each write is { row, col, values }: the strings go into
+// consecutive cells of one row, starting at column index `col`. An empty
+// string empties the cell. Nothing else is touched.
+export async function writeCells(tab, writes) {
+  const data = writes.map(({ row, col, values }) => ({
+    range: rangeFor(tab, row, col, col + values.length - 1),
+    values: [values],
+  }));
+  await apiFetch(`${spreadsheetUrl()}/values:batchUpdate`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ valueInputOption: 'RAW', data }),
+  });
 }

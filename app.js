@@ -1,6 +1,8 @@
-import { missingConfigKeys } from './config.js';
+import { ENVIRONMENT, missingConfigKeys } from './config.js';
 import * as auth from './auth.js';
-import { probeSpreadsheet } from './api.js';
+import { probeSpreadsheet, readTab } from './api.js';
+import { dateOf, formatDate } from './sheet-format.js';
+import { initToday, showMissingTab, startWorkout } from './today.js';
 
 const SCREENS = ['config', 'signin', 'checking', 'denied', 'app'];
 const SCREENS_WITH_ACCOUNT = ['app', 'denied'];
@@ -64,9 +66,20 @@ async function enterApp() {
   clearError();
   showChecking('Checking access…');
   try {
-    const { title } = await probeSpreadsheet();
+    const { title, tabs } = await probeSpreadsheet();
+    const today = dateOf(new Date());
+    const tab = String(today.y);
     $('account-email').textContent = auth.getEmail() || '';
     $('sheet-title').textContent = title;
+    $('today-date').textContent = formatDate(today);
+    if (!tabs.includes(tab)) {
+      showMissingTab(tab);
+      showScreen('app');
+      return;
+    }
+    showChecking('Loading today’s workout…');
+    const rows = await readTab(tab);
+    startWorkout({ tab, rows, today });
     showScreen('app');
   } catch (error) {
     handleAccessError(error);
@@ -100,6 +113,7 @@ async function onSignOut(event) {
 async function boot() {
   const missing = missingConfigKeys();
   if (missing.length > 0) {
+    $('config-name').textContent = ENVIRONMENT;
     const list = $('missing-keys');
     for (const key of missing) {
       const item = document.createElement('li');
@@ -110,6 +124,7 @@ async function boot() {
     return;
   }
 
+  initToday();
   $('sign-in').addEventListener('click', onSignIn);
   $('sign-out').addEventListener('click', onSignOut);
   $('use-different-account').addEventListener('click', onSignOut);

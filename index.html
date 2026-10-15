@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Gym Tracker</title>
+  <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
   <header>
@@ -18,7 +19,7 @@
 
   <section id="screen-config" hidden>
     <h2>Not configured</h2>
-    <p>These settings in <code>config.js</code> are still blank:</p>
+    <p>These settings of the <strong id="config-name"></strong> configuration in <code>config.js</code> are still blank:</p>
     <ul id="missing-keys"></ul>
   </section>
 
@@ -41,7 +42,18 @@
   </section>
 
   <section id="screen-app" hidden>
+    <h2 id="today-date"></h2>
     <p>Connected to: <strong id="sheet-title"></strong></p>
+    <p id="tab-missing" hidden></p>
+    <div id="workout" hidden>
+      <div id="exercises"></div>
+      <div class="add-exercise">
+        <select id="add-select" aria-label="Add an exercise"></select>
+      </div>
+      <p id="save-status" role="status"></p>
+      <button type="button" id="save-retry" hidden>Retry</button>
+      <button type="button" id="save-signin" hidden>Sign in to save</button>
+    </div>
   </section>
 
   <script type="module" src="./app.js"></script>

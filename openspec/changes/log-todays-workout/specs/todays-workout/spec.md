@@ -63,7 +63,7 @@ The workout screen SHALL list every exercise that has a weight or reps in today'
 - **THEN** the workout screen lists Bizepsmaschine with the weight 40 and no saved sets
 
 ### Requirement: Each exercise has a weight and set fields
-Each exercise SHALL show one weight field and a list of set fields. Each set field SHALL have a reps value and a weight of its own, which defaults to the exercise weight. The list SHALL have at least three fields, and at least as many as last time's sets and as today's saved sets. The user SHALL be able to add more set fields.
+Each exercise SHALL show one weight field and a list of set fields. Each set field SHALL have a weight of its own, which defaults to the exercise weight, on the left, and a reps value on the right, as in the sheet's notation. The list SHALL have at least three fields, and at least as many as last time's sets and as today's saved sets. The user SHALL be able to add more set fields and to delete any set field.
 
 #### Scenario: Three fields by default
 - **WHEN** an exercise was last done with two sets and has no sets today
@@ -76,6 +76,14 @@ Each exercise SHALL show one weight field and a list of set fields. Each set fie
 #### Scenario: Adding a set field
 - **WHEN** the user selects "+ Set" on an exercise showing three set fields
 - **THEN** it shows four set fields
+
+#### Scenario: Deleting a set
+- **WHEN** an exercise was last done with four sets, the user entered reps 10, 9 and 8 today, and deletes the empty fourth set field
+- **THEN** it shows three set fields and nothing is written
+
+#### Scenario: Deleting a set that holds reps
+- **WHEN** the reps cell holds "10, 9, 8" and the user deletes the second set field
+- **THEN** the reps cell holds "10, 8"
 
 ### Requirement: "Last time" is the most recent earlier record
 For each exercise, "last time" SHALL be the lowest workout row above today's row whose reps cell for that exercise holds at least one readable set. With no today's row, all workout rows count. If no workout row qualifies, "last time" SHALL be the carry-over row, provided its reps cell for that exercise holds a readable set.
@@ -113,7 +121,7 @@ If today's row has no weight for an exercise, the weight field SHALL hold last t
 - **THEN** the first set field shows no placeholder, and the second and third show 9 and 7
 
 ### Requirement: Each change is saved when the field is left
-When the user leaves a weight field or set field after changing it, the app SHALL save that exercise. It SHALL write the exercise's weight cell and reps cell in today's row, in the notation described in the sheet-format capability. Only set fields that hold reps SHALL be included.
+When the user leaves a weight field or set field after changing it, the app SHALL save that exercise. It SHALL write the exercise's weight cell and reps cell in today's row, in the notation described in the sheet-format capability. Only set fields that hold reps SHALL be included. An exercise without any reps SHALL leave both cells empty, even when it has a weight.
 
 #### Scenario: Logging the first set
 - **WHEN** Latzug's weight field holds 75 and the user enters 10 in the first set field and leaves it
@@ -129,10 +137,14 @@ When the user leaves a weight field or set field after changing it, the app SHAL
 
 #### Scenario: Changing only the weight
 - **WHEN** the user changes an exercise's weight to 80 before entering any set and leaves the field
-- **THEN** the weight cell holds "80" and the reps cell stays empty
+- **THEN** nothing is saved for the exercise: its weight cell and reps cell stay empty
 
 #### Scenario: Clearing an exercise
 - **WHEN** the user empties the weight field and every set field of an exercise
+- **THEN** both of its cells in today's row are emptied
+
+#### Scenario: Deleting the reps again
+- **WHEN** the user entered reps for an exercise, so it was saved, and then empties every set field but leaves the weight
 - **THEN** both of its cells in today's row are emptied
 
 #### Scenario: Prefilled values alone are not saved
