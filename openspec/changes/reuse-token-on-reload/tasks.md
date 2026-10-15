@@ -46,14 +46,14 @@ Groups 1–2 are implemented in the git worktree above (branch `worktree-reuse-t
 ## 2. Merge and publish
 
 - [x] 2.1 Commit all work in the worktree, then fast-forward `main` to the worktree branch from the main checkout with `git merge --ff-only worktree-reuse-token-on-reload`. Do not push. Verify that `git log main -1` matches the worktree branch head and that `git status` is clean on `main`.
-- [ ] 2.2 (Manual, user) Push `main` to `origin`. Verify that the `pages-build-deployment` run for that commit succeeds in the repository's Actions tab.
+- [x] 2.2 (Manual, user) Push `main` to `origin`. Verify that the `pages-build-deployment` run for that commit succeeds in the repository's Actions tab.
 
 ## 3. Live verification
 
 These checks run against the deployed site after the push in 2.2, so they are checked off in a follow-up commit. Set `SITE` to `https://<owner>.github.io/<repo>/`.
 
-- [ ] 3.1 On a desktop browser at `$SITE`, sign in and then reload. The connected screen appears without a popup, and Session Storage holds `gymTracker.session`. Then sign out: the entry is gone. Verify that the console shows no errors from this app's code. Record the result in this task.
-- [ ] 3.2 (Manual, user) On your phone, in Chrome with pop-ups allowed for the site, open `$SITE`. The first load after the deployment may still flash Google's popup once, because no token is stored yet. Then reload a few times within the hour: each reload goes straight to the connected screen with no Google popup. Repeat from the home-screen shortcut. The first launch may flash the popup, but reloads in that tab must not. If you notice Chrome reloading the tab after you come back from another app, record whether it also went straight to the connected screen (design.md, "Open Questions"). Write the outcome into this task.
+- [x] 3.1 On a desktop browser at `$SITE`, sign in and then reload. The connected screen appears without a popup, and Session Storage holds `gymTracker.session`. Then sign out: the entry is gone. Verify that the console shows no errors from this app's code. Record the result in this task. Result (user, desktop Chrome, 2026-10-15): reload after sign-in showed the connected screen, `gymTracker.session` and `gymTracker.lastEmail` were both gone after "Sign out", and the console showed no errors.
+- [x] 3.2 (Manual, user) On your phone, in Chrome with pop-ups allowed for the site, open `$SITE`. The first load after the deployment may still flash Google's popup once, because no token is stored yet. Then reload a few times within the hour: each reload goes straight to the connected screen with no Google popup. Repeat from the home-screen shortcut. The first launch may flash the popup, but reloads in that tab must not. If you notice Chrome reloading the tab after you come back from another app, record whether it also went straight to the connected screen (design.md, "Open Questions"). Write the outcome into this task. Result (user, phone, 2026-10-15): the first open, from the browser or from the home-screen shortcut, flashes Google's popup briefly. Reloads within the hour go straight to "Checking access…" with no popup. No Chrome tab reload after returning from another app was reported, so the "Open Questions" item stays unanswered.
 
 ## Workflow follow-up
 
