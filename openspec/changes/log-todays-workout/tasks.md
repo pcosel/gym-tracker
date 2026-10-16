@@ -163,7 +163,8 @@ These checks run against the deployed site after 6.2, so they are checked off in
   - `curl -s "$SITE"` contains `<title>Gym Tracker</title>` and `<h1>Gym Tracker</h1>`;
   - `curl -s "${SITE}config.js"` is byte-identical to the committed `config.js`.
 - [x] 7.2 Read-only check on a desktop browser at `$SITE`. Sign in. The workout screen shows the real sheet's title and today's date. Every `sheets.googleapis.com` request carries the production ID, as in the scenario "Live site uses the production sheet". Enter nothing: the Network tab shows no `values:batchUpdate`. Verify that the browser console shows no errors from this app's code.
-- [ ] 7.3 (Manual, user) At the next workout, log it with the app on the phone. Afterwards, check in Google Sheets that today's row holds the entries in the usual notation and that no other row changed. Record in this task whether the session expired during the workout, and whether "Sign in to save" recovered it with one tap.
+- [x] 7.3 (Manual, user) At the next workout, log it with the app on the phone. Afterwards, check in Google Sheets that today's row holds the entries in the usual notation and that no other row changed. Record in this task whether the session expired during the workout, and whether "Sign in to save" recovered it with one tap.
+  - Result (2026-10-15 workout): logged on the phone; the sheet row holds the entries as expected. The session expired once, and "Sign in to save" recovered it with one tap.
 
 ## Workflow follow-up
 
