@@ -35,7 +35,7 @@ If the spreadsheet has no tab for the current year, the workout screen SHALL nam
 - **AND** it shows no exercises and no way to add one
 
 ### Requirement: Today's row is found by its date
-Today's row SHALL be the workout row whose date is today. If several rows have today's date, the app SHALL use the lowest one. If none has, there SHALL be no today's row yet, and the screen SHALL show no exercises until the user adds one.
+Today's row SHALL be the workout row whose date is today. If several rows have today's date, the app SHALL use the topmost one, the one with the smallest row number. If none has, there SHALL be no today's row yet, and the screen SHALL show no exercises until the user adds one.
 
 #### Scenario: Workout already started
 - **WHEN** row 14 holds "15.10.2026" with values for Latzug and Brustpresse only
@@ -45,6 +45,11 @@ Today's row SHALL be the workout row whose date is today. If several rows have t
 - **WHEN** no row holds today's date
 - **THEN** the workout screen shows no exercises and a way to add one
 - **AND** the sheet is unchanged
+
+#### Scenario: Today's date in two rows
+- **WHEN** rows 14 and 16 both hold "15.10.2026"
+- **THEN** the workout screen shows the values from row 14
+- **AND** saves write to row 14
 
 ### Requirement: Exercises are listed and added
 The workout screen SHALL list every exercise that has a weight or reps in today's row, in the order of the header row. The user SHALL be able to add any other exercise from the header row. Adding an exercise SHALL NOT write anything.
@@ -163,7 +168,7 @@ Changing the exercise weight SHALL change the weight of every set that has no we
 - **THEN** that set is saved without `@`
 
 ### Requirement: Today's row is created with the first save
-If there is no today's row, the first save SHALL create it in the first row below every row that holds any value. That save SHALL write today's date into column A together with the exercise's cells. Later saves SHALL use the same row.
+If there is no today's row, the first save that writes a weight or reps SHALL create it in the first row below every row that holds any value. That save SHALL write today's date into column A together with the exercise's cells. Later saves SHALL use the same row. A save with nothing to write SHALL NOT create the row.
 
 #### Scenario: First save of the day
 - **WHEN** the lowest row holding any value is row 13 and the user saves the first set of Latzug on 15.10.2026
@@ -173,6 +178,10 @@ If there is no today's row, the first save SHALL create it in the first row belo
 #### Scenario: Opening the app without training
 - **WHEN** the user opens the workout screen and enters nothing
 - **THEN** no row is created
+
+#### Scenario: Weight changed before the first set
+- **WHEN** there is no today's row and the user changes an exercise's weight before entering any set and leaves the field
+- **THEN** no row is created and nothing is written to the sheet
 
 ### Requirement: Save status is shown
 The workout screen SHALL show whether changes are being saved, have been saved or failed to save. When a save fails, the entered values SHALL stay on screen and the screen SHALL offer to retry, which saves the current values.

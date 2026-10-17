@@ -2,7 +2,7 @@
 
 Worktree: read-write-sheet
 
-Groups 1–5 are implemented in the git worktree above, on branch `worktree-read-write-sheet`, which matches `main` when this change starts. Serve it with `python -m http.server 8000 --directory <worktree path>` and open `http://localhost:8000`. Task 1.1 is done by the user and can run in parallel with groups 2 and 3, which need no sheet. Every check from group 4 on runs against the development sheet from 1.1, never the real one.
+Groups 1–5 and 8 are implemented in the git worktree above, on branch `worktree-read-write-sheet`, which matches `main` when this change starts. Serve it with `python -m http.server 8000 --directory <worktree path>` and open `http://localhost:8000`. Task 1.1 is done by the user and can run in parallel with groups 2 and 3, which need no sheet. Every check from group 4 on runs against the development sheet from 1.1, never the real one.
 
 ## 1. Configurations
 
@@ -60,7 +60,7 @@ Groups 1–5 are implemented in the git worktree above, on branch `worktree-read
 - [x] 3.1 In `workout.js`, implement `buildToday(rows, today)`, which returns `todayRow`, `nextRow` and per exercise `today` and `last`, as in design.md ("Today's model and prefill"). Add `tests/workout.test.js` with a made-up 2026 tab (header, carry-over row, rows of varying length) covering these todays-workout scenarios:
   - "Workout already started";
   - "No workout yet today";
-  - two rows with today's date, where the lowest is used;
+  - two rows with today's date, where the topmost is used;
   - "Weight without reps is skipped";
   - "Carry-over row as fallback";
   - "Never done";
@@ -166,8 +166,28 @@ These checks run against the deployed site after 6.2, so they are checked off in
 - [x] 7.3 (Manual, user) At the next workout, log it with the app on the phone. Afterwards, check in Google Sheets that today's row holds the entries in the usual notation and that no other row changed. Record in this task whether the session expired during the workout, and whether "Sign in to save" recovered it with one tap.
   - Result (2026-10-15 workout): logged on the phone; the sheet row holds the entries as expected. The session expired once, and "Sign in to save" recovered it with one tap.
 
+## 8. Fixes from verification
+
+`/opsx:verify` on 2026-10-16 found three gaps. They are fixed in the same worktree, and every check runs against the development sheet.
+
+- [ ] 8.1 Add `writesFor` to `workout.js` as in design.md ("Today's model and prefill"). In `today.js`, `saveOne` builds its writes with it and sends no request when the list is empty. Add tests for:
+  - "Weight changed before the first set": a save that creates the row with both cells empty gives no writes;
+  - "First save of the day": a save that creates the row gives `A{row}` with the date, then the exercise's two cells;
+  - "Clearing an exercise": in an existing row, both cells are written empty.
+
+  In `README.md` ("Saving"), add that a weight changed before the first set writes nothing. Verify that `npm test` passes.
+- [ ] 8.2 Add `removeSet` to `workout.js` and use it for "×" in `today.js`, as in design.md ("Workout screen interaction"). Add tests for "Deleting a set" and "Deleting a set that holds reps". Verify that `npm test` passes.
+- [ ] 8.3 In `tests/workout.test.js`, rename the duplicate-date test after the scenario "Today's date in two rows". Verify that `npm test` passes.
+- [ ] 8.4 Verify on `localhost`, on a day without a row for today in the development sheet:
+  - "Weight changed before the first set": add an exercise, change its weight and leave the field. The Network tab shows no `values:batchUpdate`, and the sheet has no new row.
+  - Enter a set in that exercise. One `values:batchUpdate` writes `A{n}` and the exercise's two cells.
+  - "Deleting a set": show four set fields (an exercise last done with four sets, or "+ Set"), enter 10, 9 and 8, and delete the empty fourth field. No `values:batchUpdate` follows.
+  - "Deleting a set that holds reps": delete the second set. The reps cell holds `"10, 8"`.
+- [ ] 8.5 Run `npm test`, then commit in the worktree. From the main checkout, fast-forward `main` (`git merge --ff-only worktree-read-write-sheet`). Do not push. Verify that `git log main -1` matches the worktree branch head.
+- [ ] 8.6 (Manual, user) Push `main` to `origin`. Verify that the `pages-build-deployment` run for that commit succeeds in the repository's Actions tab.
+
 ## Workflow follow-up
 
-- Once group 7 passes, run `/opsx:archive` on `main`. It adds `specs/sheet-format` and `specs/todays-workout`, applies the deltas to `specs/sheet-access` and `specs/google-sign-in`, and moves this change to `openspec/changes/archive/`.
+- Once groups 7 and 8 pass, run `/opsx:archive` on `main`. It adds `specs/sheet-format` and `specs/todays-workout`, applies the deltas to `specs/sheet-access` and `specs/google-sign-in`, and moves this change to `openspec/changes/archive/`.
 - Commit the checked-off tasks and the archive together. The user pushes `main` by hand.
 - Remove the `read-write-sheet` worktree and its `worktree-read-write-sheet` branch once `main` contains them.

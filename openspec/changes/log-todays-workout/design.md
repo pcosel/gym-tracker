@@ -39,7 +39,7 @@ index.html ---- styles.css
     |       \
     |      api.js --- apiFetch, probeSpreadsheet (+ tab titles), readTab, writeCells
     |
-  workout.js ------ pure: today's model from the tab's rows, prefill, cells for an exercise
+  workout.js ------ pure: today's model from the tab's rows, prefill, cells and writes for an exercise
     |
   sheet-format.js - pure: header, dates, weight and reps cells, column letters, ranges
 ```
@@ -79,7 +79,7 @@ Every value is sent as a string. `RAW` stores it unparsed as text, which fulfils
 
 ### Today's model and prefill (`workout.js`)
 `buildToday(rows, today)` returns `{ todayRow | null, nextRow, exercises }`. `nextRow` is `rows.length + 1`, the first row below every row that holds any value. Each exercise carries `{ name, weightCol, repsCol, today, last }`. Both `today` and `last` are a parsed cell pair, or `null`.
-- **Today's row.** The lowest row whose column A parses as today's date.
+- **Today's row.** The topmost row (smallest row number) whose column A parses as today's date.
 - **Last time.** Scan upwards from the row above `todayRow`, or from the last row when there is no today's row, down to row 3, for the first row with at least one readable set in the exercise's reps column. If none qualifies, use the carry-over row under the same condition.
 - **Initial editor state.** For an exercise this is `{ mode, weight, sets[] }`. Its `mode` is `'text'` when today's weight or reps cell is unreadable, and `'sets'` otherwise.
   - The weight is today's weight if set, otherwise last time's weight.
@@ -88,6 +88,8 @@ Every value is sent as a string. `RAW` stores it unparsed as text, which fulfils
     - A field with a set today takes `reps` and `ownWeight` from today's set at that position. `ownWeight` is that set's `@` weight, or empty.
     - A field without a set today has empty `reps`. Its `placeholder` is last time's reps at that position, and its `ownWeight` is last time's `@` weight there, if any.
 - **Saving.** `cellsFor(state)` returns `{ weightText, repsText }`. In `'sets'` mode it keeps the fields whose reps are filled in, in order, and formats them. In `'text'` mode it returns the two texts unchanged. Validation lives here too: a weight is a non-negative number with a comma or a dot, and reps are a whole number. An invalid exercise returns an error instead of cells.
+- **Writes.** `writesFor(exercise, cells, { row, creating, today })` turns an exercise's cells into the list for `writeCells`: its two cells in `row`, preceded by `A{row}` with today's date when the save creates the row. When the save would create the row and both cells are empty, the list is empty. A weight changed before the first set therefore neither writes nor creates the row.
+- **Deleting a set.** `removeSet(state, index)` returns `{ state, changed }` without that field. `changed` is true only when the field held reps, since a field without reps is not part of the cells.
 
 ### Workout screen interaction (`today.js`)
 - **Inputs.** Each value is an `<input type="text">`, with `inputmode="decimal"` for weights and `inputmode="numeric"` for reps.
@@ -96,6 +98,7 @@ Every value is sent as a string. `RAW` stores it unparsed as text, which fulfils
   - With this, changing the exercise weight automatically moves every following set, exactly as editing the weight cell does in the sheet. A value equal to the exercise weight is formatted without `@`.
 - **When a save starts.** The input's `change` event fires when the field is left after an edit, or on Enter. It marks that exercise as dirty and starts the queue.
 - **Adding an exercise.** A `<select>` lists the header exercises that are not shown yet. Picking one inserts it at its header position with its initial state and scrolls it into view. Nothing is written until a field of it changes.
+- **Deleting a set.** "×" on a set row calls `removeSet`, re-renders the exercise, and starts a save only when `changed` is true.
 - **Rendering.** Everything is built with `createElement`, `textContent` and `.value`, never `innerHTML`, because exercise names and cell text come from the sheet.
 
 ### Save queue
@@ -105,6 +108,7 @@ There is one queue per page, so writes go out one at a time.
 - **Creating the row.** While `todayRow` is `null`, a save first reads the tab again.
   - If a today's row has appeared meanwhile, for example typed by hand in the sheet, the save uses it.
   - Otherwise it uses the fresh `rows.length + 1` and adds `A{row} = today` to the same `writeCells` call.
+  - When `writesFor` returns no writes, the save ends without a request, and `todayRow` stays `null`.
   - On success it records `todayRow`. That costs one extra read per day and avoids overwriting a row added in the sheet since the screen loaded.
 - **Status.** One status line shows:
   - "Saving…" while anything is dirty or in flight;
@@ -160,7 +164,7 @@ export const CONFIG = CONFIGS[ENVIRONMENT];
 
 - **[The sheet edited by hand while the app is open]** The app reads the tab only on load, and when it creates today's row. An exercise changed in the sheet and then saved from a stale screen is overwritten. → This is accepted for a single user. Reloading picks up the sheet's current state. Each save covers only one exercise's two cells, so other exercises are never affected.
 - **[Unsaved edits are lost on reload]** If the page closes while a save is failing, those values are gone. → The status line makes "Not saved" visible. Offline persistence is a non-goal.
-- **[Several rows with today's date]** For example, the user typed one by hand. → The lowest row is used. The spec makes this deterministic, and nothing is merged.
+- **[Several rows with today's date]** For example, the user typed one by hand. → The topmost one is used. The spec makes this deterministic, and nothing is merged.
 - **[Text weights in the Automatic columns]** These cells are left-aligned. → This is accepted. If the user wants a uniform look, formatting Z:AG as plain text in the sheet fixes it for typed entries too, and the app works either way.
 - **[Locale]** Formatted values follow the spreadsheet's locale, so a number weight can arrive as `17,5`. → The weight parser accepts a comma. Reps are integers and cannot be affected. The `@` weights the user types use a dot.
 - **[Session expiry at the gym]** The phone blocks silent renewal, so after about an hour the first save fails. → It is recovered in place with one tap (see "Save queue"), with no lost values and no account chooser.
