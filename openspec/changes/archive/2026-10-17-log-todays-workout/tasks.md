@@ -185,7 +185,8 @@ These checks run against the deployed site after 6.2, so they are checked off in
   - "Deleting a set that holds reps": delete the second set. The reps cell holds `"10, 8"`.
   - Result (2026-10-17, Bankdrücken): the weight change to 57.5 sent only the extra read and no write, and the tab still ended at row 59. The first set wrote `A60` and `B60:C60` (`"57.5"`, `"10"`). Deleting the empty fourth field sent nothing, and deleting the second set wrote `"10, 8"`.
 - [x] 8.5 Run `npm test`, then commit in the worktree. From the main checkout, fast-forward `main` (`git merge --ff-only worktree-read-write-sheet`). Do not push. Verify that `git log main -1` matches the worktree branch head.
-- [ ] 8.6 (Manual, user) Push `main` to `origin`. Verify that the `pages-build-deployment` run for that commit succeeds in the repository's Actions tab.
+- [x] 8.6 (Manual, user) Push `main` to `origin`. Verify that the `pages-build-deployment` run for that commit succeeds in the repository's Actions tab.
+  - Result (2026-10-17): `origin/main` is at `89f94fc`. The deployed `workout.js` is identical to that commit's, so the deployment succeeded. It was checked by fetching the file, because `gh` is not installed.
 
 ## Workflow follow-up
 
