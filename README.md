@@ -73,7 +73,7 @@ The screen shows today's date and the exercises that have a weight or reps in to
 
 ### Saving
 
-- A change is saved when you leave the field. The first save of the day creates today's row below every row with a value, after reading the tab once more in case a row appeared meanwhile. Opening the app without training writes nothing.
+- A change is saved when you leave the field. The first save of the day creates today's row below every row with a value, after reading the tab once more in case a row appeared meanwhile. Opening the app without training writes nothing, and neither does changing a weight before the first set.
 - The status line shows "Saving…", "Saved", or "Not saved" with the reason and "Retry". Entered values stay on screen after a failure.
 - Edits made during a save are written afterwards, so the sheet ends up with the latest values.
 - An exercise without any reps keeps both its cells empty, even when it has a weight. Clearing the reps again empties the weight cell too.

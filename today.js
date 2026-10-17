@@ -3,8 +3,7 @@
 // or placeholder, never as HTML.
 import * as auth from './auth.js';
 import { readTab, writeCells } from './api.js';
-import { buildToday, initialState, cellsFor } from './workout.js';
-import { formatDate } from './sheet-format.js';
+import { buildToday, initialState, cellsFor, writesFor, removeSet } from './workout.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -142,10 +141,10 @@ function buildExercise(item) {
     remove.textContent = '×';
     remove.setAttribute('aria-label', `Delete ${exercise.name} set ${i + 1}`);
     remove.addEventListener('click', () => {
-      state.sets.splice(i, 1);
+      const result = removeSet(item.state, i);
+      item.state = result.state;
       rebuildExercise(item);
-      // Removing a set that was filled in changes what the sheet should hold.
-      if (set.reps.trim() !== '') onChange(item);
+      if (result.changed) onChange(item);
     });
     row.append(number, ownWeight, reps, remove);
     list.append(row);
@@ -279,8 +278,10 @@ async function saveOne(key) {
   invalid.delete(key);
   markInvalid(item, null);
 
-  const writes = [{ row, col: item.exercise.weightCol, values: [cells.weightText, cells.repsText] }];
-  if (creating) writes.unshift({ row, col: 0, values: [formatDate(today)] });
+  // Nothing to write yet, such as a weight changed before the first set: no
+  // request, and today's row is not created.
+  const writes = writesFor(item.exercise, cells, { row, creating, today });
+  if (writes.length === 0) return;
   try {
     await writeCells(tab, writes);
   } catch (error) {

@@ -170,20 +170,21 @@ These checks run against the deployed site after 6.2, so they are checked off in
 
 `/opsx:verify` on 2026-10-16 found three gaps. They are fixed in the same worktree, and every check runs against the development sheet.
 
-- [ ] 8.1 Add `writesFor` to `workout.js` as in design.md ("Today's model and prefill"). In `today.js`, `saveOne` builds its writes with it and sends no request when the list is empty. Add tests for:
+- [x] 8.1 Add `writesFor` to `workout.js` as in design.md ("Today's model and prefill"). In `today.js`, `saveOne` builds its writes with it and sends no request when the list is empty. Add tests for:
   - "Weight changed before the first set": a save that creates the row with both cells empty gives no writes;
   - "First save of the day": a save that creates the row gives `A{row}` with the date, then the exercise's two cells;
   - "Clearing an exercise": in an existing row, both cells are written empty.
 
   In `README.md` ("Saving"), add that a weight changed before the first set writes nothing. Verify that `npm test` passes.
-- [ ] 8.2 Add `removeSet` to `workout.js` and use it for "×" in `today.js`, as in design.md ("Workout screen interaction"). Add tests for "Deleting a set" and "Deleting a set that holds reps". Verify that `npm test` passes.
-- [ ] 8.3 In `tests/workout.test.js`, rename the duplicate-date test after the scenario "Today's date in two rows". Verify that `npm test` passes.
-- [ ] 8.4 Verify on `localhost`, on a day without a row for today in the development sheet:
+- [x] 8.2 Add `removeSet` to `workout.js` and use it for "×" in `today.js`, as in design.md ("Workout screen interaction"). Add tests for "Deleting a set" and "Deleting a set that holds reps". Verify that `npm test` passes.
+- [x] 8.3 In `tests/workout.test.js`, rename the duplicate-date test after the scenario "Today's date in two rows". Verify that `npm test` passes.
+- [x] 8.4 Verify on `localhost`, on a day without a row for today in the development sheet:
   - "Weight changed before the first set": add an exercise, change its weight and leave the field. The Network tab shows no `values:batchUpdate`, and the sheet has no new row.
   - Enter a set in that exercise. One `values:batchUpdate` writes `A{n}` and the exercise's two cells.
   - "Deleting a set": show four set fields (an exercise last done with four sets, or "+ Set"), enter 10, 9 and 8, and delete the empty fourth field. No `values:batchUpdate` follows.
   - "Deleting a set that holds reps": delete the second set. The reps cell holds `"10, 8"`.
-- [ ] 8.5 Run `npm test`, then commit in the worktree. From the main checkout, fast-forward `main` (`git merge --ff-only worktree-read-write-sheet`). Do not push. Verify that `git log main -1` matches the worktree branch head.
+  - Result (2026-10-17, Bankdrücken): the weight change to 57.5 sent only the extra read and no write, and the tab still ended at row 59. The first set wrote `A60` and `B60:C60` (`"57.5"`, `"10"`). Deleting the empty fourth field sent nothing, and deleting the second set wrote `"10, 8"`.
+- [x] 8.5 Run `npm test`, then commit in the worktree. From the main checkout, fast-forward `main` (`git merge --ff-only worktree-read-write-sheet`). Do not push. Verify that `git log main -1` matches the worktree branch head.
 - [ ] 8.6 (Manual, user) Push `main` to `origin`. Verify that the `pages-build-deployment` run for that commit succeeds in the repository's Actions tab.
 
 ## Workflow follow-up

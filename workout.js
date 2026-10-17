@@ -8,6 +8,7 @@ import {
   hasCarryOverRow,
   parseWeight,
   parseReps,
+  formatDate,
   formatWeight,
   formatSets,
 } from './sheet-format.js';
@@ -156,4 +157,25 @@ export function cellsFor(state) {
     weightText: weight === null ? '' : formatWeight(weight),
     repsText: formatSets(sets, weight),
   };
+}
+
+// The state without the set field at `index`. `changed` tells whether the
+// cells change, which is only so when that field held reps: fields without
+// reps are not part of the cells.
+export function removeSet(state, index) {
+  return {
+    state: { ...state, sets: state.sets.filter((_, i) => i !== index) },
+    changed: state.sets[index].reps.trim() !== '',
+  };
+}
+
+// The writes for one save of an exercise, as writeCells takes them: its two
+// cells in `row`, after today's date in column A when the save creates the
+// row. A save that would create the row with both cells empty writes nothing,
+// so the row only appears with the first value.
+export function writesFor({ weightCol }, { weightText, repsText }, { row, creating, today }) {
+  if (creating && weightText === '' && repsText === '') return [];
+  const writes = [{ row, col: weightCol, values: [weightText, repsText] }];
+  if (creating) writes.unshift({ row, col: 0, values: [formatDate(today)] });
+  return writes;
 }

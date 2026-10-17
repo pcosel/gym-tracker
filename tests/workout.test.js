@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { buildToday, initialState, cellsFor } from '../workout.js';
+import { buildToday, initialState, cellsFor, writesFor, removeSet } from '../workout.js';
 
 // All data below is made up. Columns: B/C Bankdrücken, D/E Latzug,
 // F/G Beinpresse, H/I Bizepsmaschine, J/K Duale Schulterpresse.
@@ -37,7 +37,7 @@ test('No workout yet today', () => {
   assert.ok(model.exercises.every((e) => e.today === null));
 });
 
-test('two rows with today\'s date: the lowest is used', () => {
+test('Today\'s date in two rows: the topmost is used', () => {
   const rows = tab(['15.10.2026', '', '', '75', '10'], ['15.10.2026', '', '', '99', '1']);
   assert.equal(buildToday(rows, TODAY).todayRow, 6);
 });
@@ -225,4 +225,44 @@ test('an invalid weight or a decimal reps value is flagged', () => {
 test('text mode returns the entered text unchanged', () => {
   const result = cellsFor({ mode: 'text', weightText: '25 (Seil)', repsText: '8, 9, 7 ' });
   assert.deepEqual(result, { ok: true, weightText: '25 (Seil)', repsText: '8, 9, 7 ' });
+});
+
+const latzug = () => byName(buildToday(tab(), TODAY), 'Latzug');
+
+test('Weight changed before the first set: no writes, so no row is created', () => {
+  const cells = cellsFor({ mode: 'sets', weight: '80', sets: sets([''], [''], ['']) });
+  assert.deepEqual(writesFor(latzug(), cells, { row: 6, creating: true, today: TODAY }), []);
+});
+
+test('First save of the day: the date in column A, then the exercise\'s two cells', () => {
+  const cells = cellsFor({ mode: 'sets', weight: '75', sets: sets(['10'], [''], ['']) });
+  assert.deepEqual(writesFor(latzug(), cells, { row: 6, creating: true, today: TODAY }), [
+    { row: 6, col: 0, values: ['15.10.2026'] },
+    { row: 6, col: 3, values: ['75', '10'] },
+  ]);
+});
+
+test('Clearing an exercise in an existing row writes both cells empty', () => {
+  const cells = cellsFor({ mode: 'sets', weight: '', sets: sets([''], [''], ['']) });
+  assert.deepEqual(writesFor(latzug(), cells, { row: 6, creating: false, today: TODAY }), [
+    { row: 6, col: 3, values: ['', ''] },
+  ]);
+});
+
+test('Deleting a set: the empty fourth field goes, and nothing has to be written', () => {
+  const rows = tab();
+  rows[4][4] = '10, 10, 10, 8';
+  const state = initialState(byName(buildToday(rows, TODAY), 'Latzug'));
+  ['10', '9', '8'].forEach((reps, i) => { state.sets[i].reps = reps; });
+  const result = removeSet(state, 3);
+  assert.equal(result.changed, false);
+  assert.equal(result.state.sets.length, 3);
+  assert.deepEqual(cellsFor(result.state), cellsFor(state));
+  assert.equal(state.sets.length, 4);
+});
+
+test('Deleting a set that holds reps: "10, 9, 8" becomes "10, 8"', () => {
+  const result = removeSet({ mode: 'sets', weight: '75', sets: sets(['10'], ['9'], ['8']) }, 1);
+  assert.equal(result.changed, true);
+  assert.equal(cellsFor(result.state).repsText, '10, 8');
 });
