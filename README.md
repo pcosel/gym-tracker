@@ -62,7 +62,17 @@ The app reads the layout and notation from the sheet and writes in the same nota
 
 ## Workout screen
 
-The screen shows today's date and the exercises that have a weight or reps in today's row, in header order. A selector adds any other exercise. Adding writes nothing.
+The screen shows today's date, the number of exercises done today, the save status and one tile for every exercise of the header row, in header order. Tapping a tile opens that exercise's editor below the tiles. Only one is open at a time, and nothing is open when the screen loads. Opening an exercise writes nothing.
+
+### Tiles
+
+- A tile shows two letters of the exercise's name: the first letter and the second, ignoring anything that is not a letter. If an earlier tile already has that label (ignoring case), the second letter becomes the next letter of the name that is still free. The full name is the tile's tooltip and part of its accessible name.
+- A tile has one of three colours:
+  - white: not done today;
+  - blue: done today, meaning the reps cell holds at least one set. A weight alone does not count;
+  - green: improved, meaning a set beats the set at the same position last time, by more weight or by the same weight and more reps. A set's weight is its own `@` weight, otherwise the exercise weight, otherwise 0 kg. Positions with no readable set last time are not compared.
+- The colour follows the values on screen: it changes when you leave a field or delete a set, and it keeps its state while a field is marked invalid.
+- The counter at the top counts the blue and green tiles.
 
 ### Prefill
 
@@ -74,7 +84,7 @@ The screen shows today's date and the exercises that have a weight or reps in to
 ### Saving
 
 - A change is saved when you leave the field. The first save of the day creates today's row below every row with a value, after reading the tab once more in case a row appeared meanwhile. Opening the app without training writes nothing, and neither does changing a weight before the first set.
-- The status line shows "Saving…", "Saved", or "Not saved" with the reason and "Retry". Entered values stay on screen after a failure.
+- The status sits next to the counter at the top, so it is visible whichever exercise is open. It shows "Saving…", "Saved", or "Not saved" with the reason and "Retry". Entered values stay on screen after a failure.
 - Edits made during a save are written afterwards, so the sheet ends up with the latest values.
 - An exercise without any reps keeps both its cells empty, even when it has a weight. Clearing the reps again empties the weight cell too.
 - Weights accept a dot or comma, and reps whole numbers. Other input is marked and not saved.

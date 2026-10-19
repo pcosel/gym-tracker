@@ -128,7 +128,7 @@ Colours and sizes are custom properties on `:root`, in light mode only:
 | `--bg` | `#f5f6f8` | page background |
 | `--surface` | `#ffffff` | cards, fields, "not done" tiles |
 | `--text` | `#1c2230` | body text, "not done" letters, selection ring |
-| `--muted` | `#6b7280` | secondary text, set numbers, column headings |
+| `--muted` | `#646b78` | secondary text, set numbers, column headings |
 | `--border` | `#e2e5ea` | field and tile borders |
 | `--done` | `#2563eb` | "done" tile, primary buttons, focus ring |
 | `--improved` | `#15803d` | "improved" tile |

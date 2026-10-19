@@ -1,11 +1,26 @@
+:root {
+  --bg: #f5f6f8;
+  --surface: #ffffff;
+  --text: #1c2230;
+  --muted: #646b78;
+  --border: #e2e5ea;
+  --done: #2563eb;
+  --improved: #15803d;
+  --danger: #c62828;
+  --radius: 0.875rem;
+}
+
 * { box-sizing: border-box; }
 
 body {
   margin: 0 auto;
   padding: 0.75rem;
   max-width: 32rem;
+  background: var(--bg);
+  color: var(--text);
   font-family: system-ui, sans-serif;
   font-size: 1rem;
+  line-height: 1.4;
 }
 
 header {
@@ -14,45 +29,133 @@ header {
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+#account { display: flex; align-items: center; gap: 0.5rem; }
+#account-email { color: var(--muted); font-size: 0.85rem; }
+
+h1 { font-size: 1.3rem; margin: 0; letter-spacing: -0.01em; }
+h2 { font-size: 1.15rem; margin: 0.5rem 0 0.25rem; }
+h3 { font-size: 1.05rem; margin: 0 0 0.75rem; }
+p { margin: 0.25rem 0; }
+.muted, #sheet-line { color: var(--muted); font-size: 0.85rem; }
+
+[hidden] { display: none !important; }
+
+#error { color: var(--danger); }
+
+/* Screens other than the workout are cards. */
+#screen-config, #screen-signin, #screen-checking, #screen-denied {
+  margin: 0.75rem 0;
+  padding: 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 1rem;
 }
 
-h1 { font-size: 1.4rem; margin: 0; }
-h2 { font-size: 1.2rem; margin: 0.75rem 0 0.25rem; }
-h3 { font-size: 1.05rem; margin: 0 0 0.5rem; }
-
-button, select, input { font: inherit; }
-button, select { min-height: 2.75rem; padding: 0 0.75rem; }
+button {
+  font: inherit;
+  min-height: 2.75rem;
+  padding: 0 1rem;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  cursor: pointer;
+}
+#sign-in, #use-different-account, #save-retry, #save-signin {
+  color: #fff;
+  background: var(--done);
+  border-color: var(--done);
+}
+button:disabled { opacity: 0.6; cursor: default; }
 
 /* 16px or more keeps iOS from zooming into a focused field. */
+input { font: inherit; }
 input[type="text"] {
   width: 100%;
   min-width: 0;
   min-height: 2.75rem;
   padding: 0 0.5rem;
   font-size: 1rem;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+}
+input[aria-invalid="true"] { border: 2px solid var(--danger); background: #fdecea; }
+
+:focus-visible { outline: 3px solid var(--done); outline-offset: 2px; }
+
+/* Summary line */
+#summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.75rem;
+  margin: 0.5rem 0;
+}
+#done-count { font-weight: 600; margin: 0; }
+#save-status { flex: 1; margin: 0; min-height: 1.4rem; color: var(--muted); font-size: 0.9rem; text-align: right; }
+#save-status:empty { display: none; }
+#save-status:not(:empty) ~ #save-retry,
+#save-status:not(:empty) ~ #save-signin { min-height: 2.75rem; }
+
+/* Tiles */
+#tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(3.5rem, 1fr));
+  gap: 0.5rem;
+  margin: 0.75rem 0;
+}
+#tiles button {
+  aspect-ratio: 1;
+  min-height: 0;
+  padding: 0;
+  font-size: 1.15rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  transition: background-color 150ms, color 150ms;
+}
+#tiles button[data-state="done"] { color: #fff; background: var(--done); border-color: var(--done); }
+#tiles button[data-state="improved"] { color: #fff; background: var(--improved); border-color: var(--improved); }
+#tiles button[aria-pressed="true"] { outline: 3px solid var(--text); outline-offset: 2px; }
+#tiles button:focus-visible { outline: 3px solid var(--done); outline-offset: 2px; }
+#tiles button[aria-pressed="true"]:focus-visible { outline-color: var(--text); box-shadow: 0 0 0 5px var(--done); }
+
+@media (prefers-reduced-motion: reduce) {
+  #tiles button { transition: none; }
 }
 
-input[aria-invalid="true"] { border: 2px solid #c62828; background: #fdecea; }
+/* Editor card */
+.hint { color: var(--muted); text-align: center; margin: 1rem 0; }
 
 .exercise {
   margin: 0.75rem 0;
-  padding: 0.75rem;
-  border: 1px solid #bbb;
-  border-radius: 0.5rem;
+  padding: 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 1rem;
 }
 
-.exercise label { display: block; margin-bottom: 0.5rem; }
-.exercise label span { display: block; font-size: 0.85rem; color: #555; }
+.exercise label { display: block; margin-bottom: 0.75rem; }
+.exercise label span { display: block; font-size: 0.85rem; color: var(--muted); }
 
-.sets { list-style: none; margin: 0 0 0.5rem; padding: 0; }
-.sets li {
+.set-columns, .sets li {
   display: grid;
   grid-template-columns: 1.5rem 1fr 1fr 2.75rem;
   gap: 0.5rem;
   align-items: center;
-  margin-bottom: 0.5rem;
 }
-.set-number { color: #555; text-align: right; }
+.set-columns { font-size: 0.8rem; color: var(--muted); margin-bottom: 0.25rem; }
+.set-columns span:first-child { text-align: right; }
 
-.add-exercise select { width: 100%; }
-#save-status { min-height: 1.5rem; }
+.sets { list-style: none; margin: 0 0 0.5rem; padding: 0; }
+.sets li { margin-bottom: 0.5rem; }
+.set-number { color: var(--muted); text-align: right; }
+.sets li button { padding: 0; color: var(--muted); background: none; border: none; font-size: 1.25rem; }
+.exercise > button { width: 100%; }

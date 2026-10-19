@@ -43,16 +43,17 @@
 
   <section id="screen-app" hidden>
     <h2 id="today-date"></h2>
-    <p>Connected to: <strong id="sheet-title"></strong></p>
+    <p id="sheet-line" class="muted">Sheet: <span id="sheet-title"></span></p>
     <p id="tab-missing" hidden></p>
     <div id="workout" hidden>
-      <div id="exercises"></div>
-      <div class="add-exercise">
-        <select id="add-select" aria-label="Add an exercise"></select>
+      <div id="summary">
+        <p id="done-count"></p>
+        <p id="save-status" role="status"></p>
+        <button type="button" id="save-retry" hidden>Retry</button>
+        <button type="button" id="save-signin" hidden>Sign in to save</button>
       </div>
-      <p id="save-status" role="status"></p>
-      <button type="button" id="save-retry" hidden>Retry</button>
-      <button type="button" id="save-signin" hidden>Sign in to save</button>
+      <div id="tiles" role="group" aria-label="Exercises"></div>
+      <div id="editor"></div>
     </div>
   </section>
 

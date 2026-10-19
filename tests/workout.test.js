@@ -1,6 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { buildToday, initialState, cellsFor, writesFor, removeSet } from '../workout.js';
+import {
+  buildToday, initialState, cellsFor, writesFor, removeSet, tileLabels, progressOf,
+} from '../workout.js';
 
 // All data below is made up. Columns: B/C Bankdrücken, D/E Latzug,
 // F/G Beinpresse, H/I Bizepsmaschine, J/K Duale Schulterpresse.
@@ -265,4 +267,92 @@ test('Deleting a set that holds reps: "10, 9, 8" becomes "10, 8"', () => {
   const result = removeSet({ mode: 'sets', weight: '75', sets: sets(['10'], ['9'], ['8']) }, 1);
   assert.equal(result.changed, true);
   assert.equal(cellsFor(result.state).repsText, '10, 8');
+});
+
+test('Tile labels: plain label and several words', () => {
+  assert.deepEqual(tileLabels(['Latzug']), ['La']);
+  assert.deepEqual(tileLabels(['Duale Schulterpresse']), ['Du']);
+});
+
+test('Tile labels: names with the same first letters stay unique', () => {
+  assert.deepEqual(tileLabels(['Bankdrücken', 'Bauchmaschine']), ['Ba', 'Bu']);
+});
+
+test('Tile labels: repeated letters are skipped', () => {
+  assert.deepEqual(tileLabels(['Bankdrücken', 'Bauchmaschine', 'Bauchpresse']), ['Ba', 'Bu', 'Bc']);
+});
+
+test('Tile labels: case is normalised and ignored when comparing', () => {
+  assert.deepEqual(tileLabels(['übung']), ['Üb']);
+  assert.deepEqual(tileLabels(['Bank', 'BAnk']), ['Ba', 'Bn']);
+});
+
+test('Tile labels: non-letters are skipped', () => {
+  assert.deepEqual(tileLabels(['1-Arm Rudern']), ['Ar']);
+});
+
+test('Tile labels: names with fewer than two letters', () => {
+  assert.deepEqual(tileLabels(['x']), ['X']);
+  assert.deepEqual(tileLabels(['123']), ['12']);
+});
+
+test('Tile labels: when every pair is taken the first pair stays', () => {
+  assert.deepEqual(tileLabels(['Ab', 'Ab']), ['Ab', 'Ab']);
+  assert.deepEqual(tileLabels(['Abb', 'Abb', 'Abb']), ['Ab', 'Ab', 'Ab']);
+});
+
+// `last` as buildToday reads it: Latzug's cells in the row before today's.
+function lastOf(weightText, repsText) {
+  const rows = [HEADER, ['01.09.2026', '', '', weightText, repsText]];
+  return byName(buildToday(rows, TODAY), 'Latzug').last;
+}
+const progress = (weightText, repsText, last) => progressOf({ weightText, repsText }, last);
+
+test('Progress: done means at least one set with reps', () => {
+  const last = lastOf('75', '10');
+  assert.equal(progress('80', '', last), 'none');
+  assert.equal(progress('', '', last), 'none');
+  assert.equal(progress('', '', null), 'none');
+  assert.equal(progress('50', '?, 9, 7', lastOf('50', '9, 9, 9')), 'done');
+});
+
+test('Progress: more reps at the same weight', () => {
+  assert.equal(progress('75', '9, 8', lastOf('75', '9, 7, 8')), 'improved');
+});
+
+test('Progress: more weight', () => {
+  assert.equal(progress('80', '6', lastOf('75', '10, 10')), 'improved');
+});
+
+test('Progress: less weight with more reps is only done', () => {
+  assert.equal(progress('70', '12', lastOf('75', '8')), 'done');
+});
+
+test('Progress: equal to last time is only done', () => {
+  assert.equal(progress('75', '10, 9', lastOf('75', '10, 9')), 'done');
+});
+
+test('Progress: own weight of a set', () => {
+  assert.equal(progress('50', '8@45', lastOf('50', '12@40, 10')), 'improved');
+});
+
+test('Progress: an extra set beyond last time is only done', () => {
+  assert.equal(progress('75', '10, 6', lastOf('75', '10')), 'done');
+});
+
+test('Progress: never done before', () => {
+  assert.equal(progress('30', '12', null), 'done');
+});
+
+test('Progress: an unreadable entry last time is not compared', () => {
+  assert.equal(progress('50', '1, 9, 7', lastOf('50', '?, 9, 7')), 'done');
+  assert.equal(progress('50', '1, 10, 7', lastOf('50', '?, 9, 7')), 'improved');
+});
+
+test('Progress: a set without any weight counts as 0 kg', () => {
+  assert.equal(progress('', '12', lastOf('', '10')), 'improved');
+});
+
+test('Progress: an unreadable weight today is never improved', () => {
+  assert.equal(progress('25 (Seil)', '10', lastOf('20', '5')), 'done');
 });

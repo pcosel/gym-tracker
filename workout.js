@@ -179,3 +179,56 @@ export function writesFor({ weightCol }, { weightText, repsText }, { row, creati
   if (creating) writes.unshift({ row, col: 0, values: [formatDate(today)] });
   return writes;
 }
+
+// One label per exercise name, in header order: the first letter and a second
+// letter, so that no two labels are equal ignoring case. Only letters count.
+// When the first two letters are taken, the first letter is paired with each
+// later letter in turn; when none is free, the first pair stays.
+export function tileLabels(names) {
+  const taken = new Set();
+  return names.map((name) => {
+    const letters = [...name].filter((char) => /\p{L}/u.test(char));
+    if (letters.length === 0) {
+      const label = [...name].slice(0, 2).join('');
+      taken.add(label.toLowerCase());
+      return label;
+    }
+    const pairOf = (second) => letters[0].toUpperCase() + second.toLowerCase();
+    if (letters.length === 1) {
+      const label = letters[0].toUpperCase();
+      taken.add(label.toLowerCase());
+      return label;
+    }
+    let label = pairOf(letters[1]);
+    for (let i = 1; i < letters.length; i++) {
+      const candidate = pairOf(letters[i]);
+      if (!taken.has(candidate.toLowerCase())) {
+        label = candidate;
+        break;
+      }
+    }
+    taken.add(label.toLowerCase());
+    return label;
+  });
+}
+
+// 'none' | 'done' | 'improved' for the cells an exercise has or would save
+// today, against its `last` entry from buildToday. Done means at least one set
+// in the reps cell, readable or not. Improved means a set beats the set at the
+// same position last time, by more weight or by the same weight and more reps.
+export function progressOf({ weightText, repsText }, last) {
+  const reps = parseReps(repsText);
+  if (reps.sets.length === 0) return 'none';
+  const weight = parseWeight(weightText);
+  if (!last || weight.unreadable || reps.unreadable) return 'done';
+
+  const weightOf = (set, cellWeight) => set.weight ?? cellWeight ?? 0;
+  const improved = reps.sets.some((set, i) => {
+    const before = last.reps.sets[i];
+    if (!before) return false;
+    const now = weightOf(set, weight.value);
+    const then = weightOf(before, last.weight.value);
+    return now > then || (now === then && set.reps > before.reps);
+  });
+  return improved ? 'improved' : 'done';
+}

@@ -1,15 +1,18 @@
-// The workout screen: renders today's exercises, handles the inputs and runs
-// the save queue. All text from the sheet goes in through textContent, value
+// The workout screen: renders the exercise tiles and the open exercise's
+// editor, handles the inputs and runs the save queue. All text from the sheet goes in through textContent, value
 // or placeholder, never as HTML.
 import * as auth from './auth.js';
 import { readTab, writeCells } from './api.js';
-import { buildToday, initialState, cellsFor, writesFor, removeSet } from './workout.js';
+import {
+  buildToday, initialState, cellsFor, writesFor, removeSet, tileLabels, progressOf,
+} from './workout.js';
 
 const $ = (id) => document.getElementById(id);
 
 // One entry per exercise of the header row, in header order:
-// { exercise, state, shown, element }.
+// { exercise, state, label, progress, tile, element }.
 let items = [];
+let selected = null;
 let tab = '';
 let today = null;
 let todayRow = null;
@@ -25,7 +28,6 @@ let saved = false;
 const keyOf = (item) => item.exercise.weightCol;
 
 export function initToday() {
-  $('add-select').addEventListener('change', onAddExercise);
   $('save-retry').addEventListener('click', () => runQueue());
   $('save-signin').addEventListener('click', onSignInToSave);
 }
@@ -41,12 +43,19 @@ export function startWorkout({ tab: tabTitle, rows, today: date }) {
   today = date;
   const model = buildToday(rows, date);
   todayRow = model.todayRow;
-  items = model.exercises.map((exercise) => ({
+  const labels = tileLabels(model.exercises.map((exercise) => exercise.name));
+  items = model.exercises.map((exercise, i) => ({
     exercise,
     state: initialState(exercise),
-    shown: exercise.today !== null,
+    label: labels[i],
+    progress: progressOf(
+      exercise.today || { weightText: '', repsText: '' },
+      exercise.last,
+    ),
+    tile: null,
     element: null,
   }));
+  selected = null;
   dirty.clear();
   invalid.clear();
   running = false;
@@ -55,9 +64,9 @@ export function startWorkout({ tab: tabTitle, rows, today: date }) {
 
   $('tab-missing').hidden = true;
   $('workout').hidden = false;
-  $('exercises').replaceChildren();
-  for (const item of items) if (item.shown) insertExercise(item);
-  renderAddChoices();
+  $('tiles').replaceChildren(...items.map(buildTile));
+  showHint();
+  renderCounter();
   renderStatus();
 }
 
@@ -112,6 +121,16 @@ function buildExercise(item) {
   weightRow.classList.add('weight');
   section.append(weightRow);
 
+  const columns = document.createElement('div');
+  columns.className = 'set-columns';
+  columns.setAttribute('aria-hidden', 'true');
+  for (const text of ['#', 'kg', 'reps', '']) {
+    const cell = document.createElement('span');
+    cell.textContent = text;
+    columns.append(cell);
+  }
+  section.append(columns);
+
   const list = document.createElement('ol');
   list.className = 'sets';
   state.sets.forEach((set, i) => {
@@ -164,48 +183,75 @@ function buildExercise(item) {
   return section;
 }
 
-function insertExercise(item) {
-  item.element = buildExercise(item);
-  // Keep header order: put it before the next shown exercise, if there is one.
-  const after = items.slice(items.indexOf(item) + 1).find((other) => other.shown && other.element);
-  $('exercises').insertBefore(item.element, after ? after.element : null);
-}
-
 function rebuildExercise(item) {
   const element = buildExercise(item);
   item.element.replaceWith(element);
   item.element = element;
 }
 
-function renderAddChoices() {
-  const select = $('add-select');
-  const prompt = document.createElement('option');
-  prompt.value = '';
-  prompt.textContent = 'Add an exercise…';
-  const options = [prompt];
-  items.forEach((item, index) => {
-    if (item.shown) return;
-    const option = document.createElement('option');
-    option.value = String(index);
-    option.textContent = item.exercise.name;
-    options.push(option);
-  });
-  select.replaceChildren(...options);
-  select.value = '';
+const STATE_TEXT = {
+  none: 'not done today',
+  done: 'done today',
+  improved: 'improved on last time',
+};
+
+function buildTile(item) {
+  const tile = document.createElement('button');
+  tile.type = 'button';
+  tile.textContent = item.label;
+  tile.addEventListener('click', () => selectItem(item));
+  item.tile = tile;
+  renderTile(item);
+  return tile;
 }
 
-function onAddExercise(event) {
-  const index = event.target.value;
-  if (index === '') return;
-  const item = items[Number(index)];
-  item.shown = true;
-  insertExercise(item);
-  renderAddChoices();
-  item.element.scrollIntoView({ block: 'center' });
+function renderTile(item) {
+  const { tile, exercise, progress } = item;
+  tile.dataset.state = progress;
+  tile.setAttribute('aria-pressed', String(item === selected));
+  tile.setAttribute('aria-label', `${exercise.name}, ${STATE_TEXT[progress]}`);
+  tile.title = exercise.name;
+}
+
+function renderCounter() {
+  const count = items.filter((item) => item.progress !== 'none').length;
+  $('done-count').textContent = `${count} ${count === 1 ? 'exercise' : 'exercises'} done today`;
+}
+
+function showHint() {
+  const hint = document.createElement('p');
+  hint.className = 'hint';
+  hint.textContent = 'Tap an exercise to log it.';
+  $('editor').replaceChildren(hint);
+}
+
+function selectItem(item) {
+  if (item === selected) return;
+  // Leaving a focused field fires its change first, so the edit is saved and
+  // the progress updated before the editor goes. A tap on a button does not
+  // reliably blur the field, on iOS Safari in particular.
+  const focused = document.activeElement;
+  if (focused && focused.tagName === 'INPUT' && $('editor').contains(focused)) focused.blur();
+
+  const previous = selected;
+  selected = item;
+  item.element = buildExercise(item);
+  $('editor').replaceChildren(item.element);
+  if (invalid.has(keyOf(item))) {
+    const cells = cellsFor(item.state);
+    if (!cells.ok) markInvalid(item, cells.invalid);
+  }
+  if (previous) {
+    previous.element = null;
+    renderTile(previous);
+  }
+  renderTile(item);
+  $('editor').scrollIntoView({ block: 'nearest' });
 }
 
 function markInvalid(item, flags) {
   const element = item.element;
+  if (!element) return; // not open: marked again when it is opened
   const setInputs = (field) => element.querySelectorAll(`.sets input[data-field="${field}"]`);
   const weight = element.querySelector('.weight input');
   const mark = (input, bad) => {
@@ -244,6 +290,14 @@ function renderStatus() {
 // ---- Saving ----
 
 function onChange(item) {
+  // The tile follows the cells the exercise would save. While a field is
+  // invalid there are none, and the tile keeps its state.
+  const cells = cellsFor(item.state);
+  if (cells.ok) {
+    item.progress = progressOf(cells, item.exercise.last);
+    renderTile(item);
+    renderCounter();
+  }
   dirty.add(keyOf(item));
   runQueue();
 }
