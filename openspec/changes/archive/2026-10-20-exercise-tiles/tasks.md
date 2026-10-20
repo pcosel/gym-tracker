@@ -141,7 +141,7 @@ The first workout showed that comparing sets by position is too generous (see 6.
   - changing the weight to 35 turns it blue;
   - its tile label is "Kl", and its editor heading shows the full name.
 - [x] 7.4 Run `npm test`. Commit all work in the worktree. From the main checkout, fast-forward `main` to the worktree branch (`git merge --ff-only worktree-add-styling`). Do not push. Verify that `git log main -1` matches the worktree branch head, and that `git status` on `main` is clean.
-- [ ] 7.5 (Manual, user) Push `main` to `origin`. Verify that the `pages-build-deployment` run for that commit succeeds, or that the deployed `workout.js` matches the commit.
+- [x] 7.5 (Manual, user) Push `main` to `origin`. Verify that the `pages-build-deployment` run for that commit succeeds, or that the deployed `workout.js` matches the commit.
 - [x] 7.6 (Manual, user) In the real sheet's 2026 tab, rename "Assisted Pullups" to "Klimmzüge (assistiert)". The renaming itself can happen at any time, because the app before 7.5 treats the renamed column as a normal exercise. After 7.5, verify in the app that its tile shows "Kl", and that a weight below last time's with the same reps would turn it green.
 
 ## Workflow follow-up
