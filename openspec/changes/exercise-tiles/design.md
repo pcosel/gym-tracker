@@ -78,26 +78,51 @@ Edge cases the spec does not cover:
 It runs once per `startWorkout`, because the header does not change while the screen is open.
 - *Alternative: compute labels while rendering each tile.* Rejected, because uniqueness depends on the tiles before it, so it has to be computed over the whole list.
 
-### Progress state: `progressOf(cells, last)` in `workout.js`
-The function returns `'none' | 'done' | 'improved'` from two inputs:
+### Progress state: `progressOf(cells, last, assisted)` in `workout.js`
+The function returns `'none' | 'done' | 'improved'` from three inputs:
 - `cells`: a `{ weightText, repsText }` pair.
 - `last`: the exercise's existing `last` entry from `buildToday`.
+- `assisted`: the exercise's `assisted` flag from `buildToday` (see "Assisted exercises" below).
 
 The same function serves both moments:
 - **On load**, `cells` is today's cells from the sheet (`exercise.today`, or empty text when it is `null`).
 - **After an edit**, `cells` is `cellsFor(item.state)` when that is `ok`.
 
 These are the cells that are or will be in the sheet, which is exactly how the spec defines "done" and "improved". It also makes the "keep the previous state while invalid" rule fall out naturally: when `cellsFor` is not `ok`, the state is not recomputed.
+- *Alternative: compute from `item.state` directly.* That duplicates `cellsFor`'s parsing and validation, and empty-field compaction could drift from what is saved.
 
 Inside, using `parseWeight` and `parseReps` from `sheet-format.js`:
 - **done**: `parseReps(repsText).sets.length > 0`. Unreadable entries count, so `"?, 9, 7"` is done.
-- **not improved**: no `last`, or an unreadable weight or reps cell today.
-- **comparison**: today's set *n* is compared with `last.reps.sets[n]`, skipping `null` positions.
-  - The effective weight is `set.weight ?? weightCell ?? 0`.
-  - A set beats the other when its weight is greater, or the weights are equal and its reps are greater.
-- Today's sets are compared as they appear in the cell, so position *n* is the *n*-th set with reps, not the *n*-th field. This matches what "last time" will read from the sheet next time.
+- **not improved**: no `last`, or an unreadable weight or reps cell today or in `last`.
+  - `last` can hold unreadable entries, because `buildToday` takes the latest row with at least one readable set.
+  - An unreadable weight is never read as 0 kg.
+- **totals**: each side becomes a list of `{ weight, reps }`, one entry per effective weight with its reps added up, sorted from the heaviest weight to the lightest. The effective weight is `set.weight ?? weightCell ?? 0`.
+- **comparison**: the two lists are walked together. At the first entry that differs, the heavier weight wins, or at the same weight the larger total. If one list ends first, the other wins. Equal lists are only done.
 
-- *Alternative: compute from `item.state` directly.* That duplicates `cellsFor`'s parsing and validation, and empty-field compaction could drift from what is saved.
+Only totals per weight are compared, so neither the order of the sets nor the field a set was typed in matters. In a workout in progress, the tile usually turns "improved" only with the last set, once the total passes last time's. This is intended.
+
+This rule replaces a first version that compared each set with the set at the same position last time, and counted the exercise as improved when any set was better. The first real workout showed that this was too generous:
+- `9, 9, 9 → 11, 8, 8` counted as improved, although two sets got worse.
+- `9, 11, 9 → 11, 9, 9` counted as improved, although it is the same sets in another order.
+
+Other rules considered:
+- *Alternative: sort both sides and compare set by set, improved when more sets got better than worse.* It needs no special case for `@` weights. Rejected, because it ignores by how much a set changed (`10, 10, 10 → 11, 11, 2` would be improved), and an extra set never counts.
+- *Alternative: the average reps per set.* Rejected, because an extra set lowers it and dropping the weakest set raises it.
+- *Alternative: weight × reps (volume).* Rejected, because it makes less weight with more reps an improvement, and often not a heavier weight with fewer reps: `75 × 10, 10, 10` is 2250 kg, `80 × 8, 7, 7` only 1760 kg. A 0 kg exercise always totals 0.
+
+Accepted consequences:
+- One set at a heavier weight is enough: `75: 10, 10, 10 → 80: 10, 8@75, 8@75` is improved.
+- Any extra set counts, even a single rep, or a logged warm-up at a lighter weight.
+
+#### Assisted exercises
+For an assisted exercise, such as assisted pull-ups, the weight is the machine's assistance, so less weight is harder.
+- **Detection:** `buildToday` gives each exercise `assisted: /\(assistiert\)/i.test(name)`. The name stays as written everywhere: tile label, `title`, accessible name and editor heading.
+- **Order:** with `assisted`, the totals are sorted from the lightest weight to the heaviest, and at the first entry that differs the lighter weight wins. Everything else is shared: reps per weight, the list-end rule and the "not improved" cases.
+- **No weight:** the effective weight stays `set.weight ?? weightCell ?? 0`, so an empty weight is no assistance, the hardest case. The editor prefills last time's weight, so an empty weight only comes from clearing the field.
+
+Rejected ways to recognise them:
+- *Alternative: a list of names in the code.* Renaming the column in a new year's tab would silently break it, and each new assisted exercise would need a deploy. It also goes against sheet-format's rule that the app does not depend on a fixed set of exercises.
+- *Alternative: log the assistance as a negative weight.* That would need no special case in the comparison. Rejected, because the weight fields use `inputmode="decimal"`, whose phone keypad has no minus key, and existing rows hold positive numbers.
 
 ### Rendering and selection in `today.js`
 - Each item gains `progress` and `label`. `shown`, `insertExercise` and `renderAddChoices` go away.
@@ -115,7 +140,7 @@ Inside, using `parseWeight` and `parseReps` from `sheet-format.js`:
   4. Call `#editor.scrollIntoView({ block: 'nearest' })`.
   
   Selecting the open tile again does nothing.
-- **Progress update:** `onChange(item)` first runs `cellsFor(item.state)`. If that is `ok`, it sets `item.progress = progressOf(cells, last)`, then calls `renderTile(item)` and `renderCounter()`, and only then marks the exercise dirty and runs the queue. Set deletion already goes through `onChange` when it changes the cells.
+- **Progress update:** `onChange(item)` first runs `cellsFor(item.state)`. If that is `ok`, it sets `item.progress = progressOf(cells, last, assisted)`, then calls `renderTile(item)` and `renderCounter()`, and only then marks the exercise dirty and runs the queue. Set deletion already goes through `onChange` when it changes the cells.
 - **Counter:** `renderCounter()` counts the items with a `progress` other than `'none'` and writes "1 exercise done today" or "N exercises done today". The `#summary` element is not a live region, so changes are not announced. The tile's accessible name already carries the state.
 - **Hint:** with no selection, `#editor` holds a muted paragraph "Tap an exercise to log it."
 - **Editor header row:** a non-list header (`#`, `kg`, `reps`) above `.sets`, using the same grid columns, with `aria-hidden="true"` because each input already has a full `aria-label`.

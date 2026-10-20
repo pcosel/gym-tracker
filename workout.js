@@ -20,7 +20,7 @@ const WHOLE_PATTERN = /^\d+$/;
 // `rows` is the tab as read: index i is sheet row i + 1. Returns
 // { todayRow, nextRow, exercises }, where todayRow is a 1-based row number or
 // null, and nextRow the first row below every row that holds any value. Each
-// exercise is { name, weightCol, repsCol, today, last }. `today` is null when
+// exercise is { name, weightCol, repsCol, assisted, today, last }. `today` is null when
 // today's row has neither a weight nor reps for it.
 export function buildToday(rows, today) {
   const cell = (row, col) => String((rows[row - 1] && rows[row - 1][col]) ?? '');
@@ -68,7 +68,14 @@ export function buildToday(rows, today) {
       if (hasReadableSet(entry)) last = { ...entry, carryOver: true };
     }
 
-    return { name, weightCol, repsCol, today: todayEntry, last };
+    return {
+      name,
+      weightCol,
+      repsCol,
+      assisted: /\(assistiert\)/i.test(name),
+      today: todayEntry,
+      last,
+    };
   });
 
   return { todayRow, nextRow, exercises };
@@ -214,21 +221,41 @@ export function tileLabels(names) {
 
 // 'none' | 'done' | 'improved' for the cells an exercise has or would save
 // today, against its `last` entry from buildToday. Done means at least one set
-// in the reps cell, readable or not. Improved means a set beats the set at the
-// same position last time, by more weight or by the same weight and more reps.
-export function progressOf({ weightText, repsText }, last) {
+// in the reps cell, readable or not. Improved means more reps: each time's
+// reps are added up per weight and compared from the heaviest weight down
+// (from the lightest for an assisted exercise, where the weight is the help
+// it got). At the first entry that differs the better weight wins, or at the
+// same weight the larger total; when one list ends first, the other wins.
+// Nothing is compared when a cell is unreadable today or last time.
+export function progressOf({ weightText, repsText }, last, assisted = false) {
   const reps = parseReps(repsText);
   if (reps.sets.length === 0) return 'none';
   const weight = parseWeight(weightText);
   if (!last || weight.unreadable || reps.unreadable) return 'done';
+  if (last.weight.unreadable || last.reps.unreadable) return 'done';
 
-  const weightOf = (set, cellWeight) => set.weight ?? cellWeight ?? 0;
-  const improved = reps.sets.some((set, i) => {
-    const before = last.reps.sets[i];
-    if (!before) return false;
-    const now = weightOf(set, weight.value);
-    const then = weightOf(before, last.weight.value);
-    return now > then || (now === then && set.reps > before.reps);
-  });
-  return improved ? 'improved' : 'done';
+  const totals = (sets, cellWeight) => {
+    const perWeight = new Map();
+    for (const set of sets) {
+      const w = set.weight ?? cellWeight ?? 0;
+      perWeight.set(w, (perWeight.get(w) ?? 0) + set.reps);
+    }
+    const direction = assisted ? 1 : -1;
+    return [...perWeight].sort((a, b) => direction * (a[0] - b[0]));
+  };
+  const now = totals(reps.sets, weight.value);
+  const then = totals(last.reps.sets, last.weight.value);
+
+  for (let i = 0; i < Math.max(now.length, then.length); i++) {
+    if (i >= then.length) return 'improved';
+    if (i >= now.length) return 'done';
+    const [nowWeight, nowReps] = now[i];
+    const [thenWeight, thenReps] = then[i];
+    if (nowWeight !== thenWeight) {
+      const better = assisted ? nowWeight < thenWeight : nowWeight > thenWeight;
+      return better ? 'improved' : 'done';
+    }
+    if (nowReps !== thenReps) return nowReps > thenReps ? 'improved' : 'done';
+  }
+  return 'done';
 }

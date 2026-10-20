@@ -12,7 +12,7 @@ The workout screen works, but it is a plain, browser-default list with a dropdow
 - **Progress colours.** Each tile shows one of three states:
   - not done today;
   - done today, meaning at least one set with reps;
-  - improved on last time, meaning at least one set beats the set at the same position last time by more weight, or by the same weight with more reps.
+  - improved on last time, meaning a heavier weight than last time, or more reps in total at the same weight. Reps are added up per weight and compared from the heaviest weight down, so the order of the sets does not matter and an extra set counts. For an exercise marked "(assistiert)" in its name, the weight is the assistance, so less weight counts as better.
   
   The colour follows the values on screen as the user leaves fields or deletes sets.
 - **Done counter.** The top of the screen shows how many exercises are done today.

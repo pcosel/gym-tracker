@@ -51,6 +51,7 @@ export function startWorkout({ tab: tabTitle, rows, today: date }) {
     progress: progressOf(
       exercise.today || { weightText: '', repsText: '' },
       exercise.last,
+      exercise.assisted,
     ),
     tile: null,
     element: null,
@@ -294,7 +295,7 @@ function onChange(item) {
   // invalid there are none, and the tile keeps its state.
   const cells = cellsFor(item.state);
   if (cells.ok) {
-    item.progress = progressOf(cells, item.exercise.last);
+    item.progress = progressOf(cells, item.exercise.last, item.exercise.assisted);
     renderTile(item);
     renderCounter();
   }

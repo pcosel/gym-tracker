@@ -301,12 +301,25 @@ test('Tile labels: when every pair is taken the first pair stays', () => {
   assert.deepEqual(tileLabels(['Abb', 'Abb', 'Abb']), ['Ab', 'Ab', 'Ab']);
 });
 
-// `last` as buildToday reads it: Latzug's cells in the row before today's.
-function lastOf(weightText, repsText) {
-  const rows = [HEADER, ['01.09.2026', '', '', weightText, repsText]];
-  return byName(buildToday(rows, TODAY), 'Latzug').last;
+// The exercise at Latzug's columns as buildToday reads it, with last time's
+// cells in the row before today's. `name` renames the column.
+function exerciseOf(weightText, repsText, name = 'Latzug') {
+  const header = HEADER.map((text) => (text === 'Latzug' ? name : text));
+  const rows = [header, ['01.09.2026', '', '', weightText, repsText]];
+  return byName(buildToday(rows, TODAY), name);
 }
-const progress = (weightText, repsText, last) => progressOf({ weightText, repsText }, last);
+const lastOf = (weightText, repsText) => exerciseOf(weightText, repsText).last;
+const progress = (weightText, repsText, last, assisted) =>
+  progressOf({ weightText, repsText }, last, assisted);
+const assistedProgress = (lastWeight, lastReps, weight, reps) =>
+  progress(weight, reps, exerciseOf(lastWeight, lastReps, 'Klimmzüge (assistiert)').last, true);
+
+test('Assisted: the name marker is found in any case, and only that', () => {
+  assert.equal(exerciseOf('', '', 'Klimmzüge (assistiert)').assisted, true);
+  assert.equal(exerciseOf('', '', 'Dips (Assistiert)').assisted, true);
+  assert.equal(exerciseOf('', '', 'Assisted Pullups').assisted, false);
+  assert.equal(exerciseOf('', '', 'Latzug').assisted, false);
+});
 
 test('Progress: done means at least one set with reps', () => {
   const last = lastOf('75', '10');
@@ -316,28 +329,63 @@ test('Progress: done means at least one set with reps', () => {
   assert.equal(progress('50', '?, 9, 7', lastOf('50', '9, 9, 9')), 'done');
 });
 
-test('Progress: more reps at the same weight', () => {
-  assert.equal(progress('75', '9, 8', lastOf('75', '9, 7, 8')), 'improved');
+test('Progress: the same sets in another order are only done', () => {
+  assert.equal(progress('75', '11, 9, 9', lastOf('75', '9, 11, 9')), 'done');
 });
 
-test('Progress: more weight', () => {
-  assert.equal(progress('80', '6', lastOf('75', '10, 10')), 'improved');
+test('Progress: one set better and two worse is only done', () => {
+  assert.equal(progress('75', '11, 8, 8', lastOf('75', '9, 9, 9')), 'done');
 });
 
-test('Progress: less weight with more reps is only done', () => {
-  assert.equal(progress('70', '12', lastOf('75', '8')), 'done');
+test('Progress: one more rep', () => {
+  assert.equal(progress('75', '10, 9, 9', lastOf('75', '9, 9, 9')), 'improved');
+});
+
+test('Progress: gains outweigh a loss', () => {
+  assert.equal(progress('75', '12, 12, 8', lastOf('75', '9, 9, 9')), 'improved');
+});
+
+test('Progress: losses outweigh gains', () => {
+  assert.equal(progress('75', '11, 11, 2', lastOf('75', '10, 10, 10')), 'done');
 });
 
 test('Progress: equal to last time is only done', () => {
   assert.equal(progress('75', '10, 9', lastOf('75', '10, 9')), 'done');
 });
 
-test('Progress: own weight of a set', () => {
-  assert.equal(progress('50', '8@45', lastOf('50', '12@40, 10')), 'improved');
+test('Progress: an extra set is improved', () => {
+  assert.equal(progress('75', '10, 6', lastOf('75', '10')), 'improved');
 });
 
-test('Progress: an extra set beyond last time is only done', () => {
-  assert.equal(progress('75', '10, 6', lastOf('75', '10')), 'done');
+test('Progress: workout in progress', () => {
+  const last = lastOf('75', '9, 7, 8');
+  assert.equal(progress('75', '9, 8', last), 'done');
+  assert.equal(progress('75', '9, 8, 8', last), 'improved');
+});
+
+test('Progress: more weight with fewer reps is improved', () => {
+  assert.equal(progress('80', '8, 7, 7', lastOf('75', '10, 10, 10')), 'improved');
+});
+
+test('Progress: less weight with more reps is only done', () => {
+  assert.equal(progress('70', '12', lastOf('75', '8')), 'done');
+});
+
+test('Progress: own weight of a set', () => {
+  assert.equal(progress('50', '12@45, 10, 10', lastOf('50', '12@40, 10, 10')), 'improved');
+});
+
+test('Progress: one heavier set is enough', () => {
+  assert.equal(progress('80', '10, 8@75, 8@75', lastOf('75', '10, 10, 10')), 'improved');
+});
+
+test('Progress: the heaviest weight decides first', () => {
+  const last = lastOf('50', '10, 10, 10, 12@40');
+  assert.equal(progress('50', '10, 10, 9, 15@40', last), 'done');
+});
+
+test('Progress: an extra lighter set is improved', () => {
+  assert.equal(progress('50', '12@30, 10, 10, 10', lastOf('50', '10, 10, 10')), 'improved');
 });
 
 test('Progress: never done before', () => {
@@ -346,7 +394,11 @@ test('Progress: never done before', () => {
 
 test('Progress: an unreadable entry last time is not compared', () => {
   assert.equal(progress('50', '1, 9, 7', lastOf('50', '?, 9, 7')), 'done');
-  assert.equal(progress('50', '1, 10, 7', lastOf('50', '?, 9, 7')), 'improved');
+  assert.equal(progress('50', '1, 10, 7', lastOf('50', '?, 9, 7')), 'done');
+});
+
+test('Progress: an unreadable weight last time is not compared', () => {
+  assert.equal(progress('25', '10, 10', lastOf('25 (Seil)', '10, 10')), 'done');
 });
 
 test('Progress: a set without any weight counts as 0 kg', () => {
@@ -355,4 +407,30 @@ test('Progress: a set without any weight counts as 0 kg', () => {
 
 test('Progress: an unreadable weight today is never improved', () => {
   assert.equal(progress('25 (Seil)', '10', lastOf('20', '5')), 'done');
+});
+
+test('Assisted: less assistance is improved', () => {
+  assert.equal(assistedProgress('30', '8, 8, 8', '25', '6, 6, 5'), 'improved');
+});
+
+test('Assisted: more assistance with more reps is only done', () => {
+  assert.equal(assistedProgress('25', '8, 8', '30', '10, 10'), 'done');
+});
+
+test('Assisted: same assistance with more reps is improved', () => {
+  assert.equal(assistedProgress('25', '8, 8, 8', '25', '9, 8, 8'), 'improved');
+});
+
+test('Assisted: no assistance beats any weight', () => {
+  assert.equal(assistedProgress('20', '8, 8', '', '3'), 'improved');
+});
+
+test('Assisted: a name without the marker compares heaviest first', () => {
+  const last = exerciseOf('30', '8', 'Assisted Pullups').last;
+  assert.equal(progress('25', '8', last, false), 'done');
+});
+
+test('Assisted: marker in another case', () => {
+  const last = exerciseOf('20', '10', 'Dips (Assistiert)').last;
+  assert.equal(progress('15', '8', last, true), 'improved');
 });

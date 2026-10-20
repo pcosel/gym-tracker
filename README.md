@@ -70,7 +70,7 @@ The screen shows today's date, the number of exercises done today, the save stat
 - A tile has one of three colours:
   - white: not done today;
   - blue: done today, meaning the reps cell holds at least one set. A weight alone does not count;
-  - green: improved, meaning a set beats the set at the same position last time, by more weight or by the same weight and more reps. A set's weight is its own `@` weight, otherwise the exercise weight, otherwise 0 kg. Positions with no readable set last time are not compared.
+  - green: improved, meaning more reps than last time. The reps are added up per weight and compared from the heaviest weight down, so the order of the sets does not matter and an extra set counts. A set's weight is its own `@` weight, otherwise the exercise weight, otherwise 0 kg. For an exercise with "(assistiert)" in its name, the weight is the assistance, so less weight counts as better and an empty weight means no assistance.
 - The colour follows the values on screen: it changes when you leave a field or delete a set, and it keeps its state while a field is marked invalid.
 - The counter at the top counts the blue and green tiles.
 

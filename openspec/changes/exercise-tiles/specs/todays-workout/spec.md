@@ -80,40 +80,111 @@ An exercise SHALL count as done today when its reps cell for today holds at leas
 - **WHEN** today's reps cell for an exercise displays "?, 9, 7"
 - **THEN** the exercise counts as done today
 
-### Requirement: "Improved" means a set beats the same set last time
-An exercise done today SHALL count as improved when any set beats the set at the same position in last time's reps cell. A set SHALL beat the earlier one when it has more weight, or the same weight and more reps. A set's weight SHALL be its `@` weight, otherwise the weight cell's, otherwise 0 kg. Positions with no readable set last time SHALL NOT count. An exercise with no last time, or with unreadable cells today, SHALL NOT count as improved.
+### Requirement: "Improved" means more reps, heaviest weight first
+An exercise done today SHALL count as improved when it beats last time. For each time, the reps SHALL be added up per weight and listed from the heaviest weight down, except for assisted exercises. The first entry where the lists differ SHALL decide: the heavier weight wins, or at the same weight the larger total. If one list ends first, the other wins. Equal lists SHALL NOT count as improved. A set's weight SHALL be its `@` weight, otherwise the weight cell's, otherwise 0 kg.
 
-#### Scenario: More reps at the same weight
-- **WHEN** Latzug last held "75" and "9, 7, 8", and today holds "75" and "9, 8"
-- **THEN** Latzug counts as improved, because its second set beats 7 reps at 75 kg
+#### Scenario: Same sets in another order
+- **WHEN** Latzug last held "75" and "9, 11, 9", and today holds "75" and "11, 9, 9"
+- **THEN** Latzug counts as done today but not as improved, because both times add up to 29 reps at 75 kg
 
-#### Scenario: More weight
-- **WHEN** Latzug last held "75" and "10, 10", and today holds "80" and "6"
-- **THEN** Latzug counts as improved
+#### Scenario: One set better, two worse
+- **WHEN** Latzug last held "75" and "9, 9, 9", and today holds "75" and "11, 8, 8"
+- **THEN** Latzug counts as done today but not as improved, because both times add up to 27 reps
 
-#### Scenario: Less weight with more reps
-- **WHEN** Latzug last held "75" and "8", and today holds "70" and "12"
-- **THEN** Latzug counts as done today but not as improved
+#### Scenario: One more rep
+- **WHEN** Latzug last held "75" and "9, 9, 9", and today holds "75" and "10, 9, 9"
+- **THEN** Latzug counts as improved, because 28 reps beat 27
+
+#### Scenario: Gains outweigh a loss
+- **WHEN** Latzug last held "75" and "9, 9, 9", and today holds "75" and "12, 12, 8"
+- **THEN** Latzug counts as improved, because 32 reps beat 27
+
+#### Scenario: Losses outweigh gains
+- **WHEN** Latzug last held "75" and "10, 10, 10", and today holds "75" and "11, 11, 2"
+- **THEN** Latzug counts as done today but not as improved, because 24 reps are fewer than 30
 
 #### Scenario: Equal to last time
 - **WHEN** Latzug last held "75" and "10, 9", and today holds "75" and "10, 9"
 - **THEN** Latzug counts as done today but not as improved
 
-#### Scenario: Own weight of a set
-- **WHEN** Bankdrücken last held "50" and "12@40, 10", and today holds "50" and "8@45"
-- **THEN** Bankdrücken counts as improved, because its first set used 45 kg instead of 40 kg
-
-#### Scenario: Extra set beyond last time
+#### Scenario: Extra set
 - **WHEN** Latzug last held "75" and "10", and today holds "75" and "10, 6"
-- **THEN** Latzug counts as done today but not as improved
+- **THEN** Latzug counts as improved, because 16 reps beat 10
+
+#### Scenario: Workout in progress
+- **WHEN** Latzug last held "75" and "9, 7, 8", and today holds "75" and "9, 8" so far
+- **THEN** Latzug counts as done today but not as improved, because 17 reps are fewer than 24
+- **AND** it counts as improved once a third set of 8 or more reps is entered
+
+#### Scenario: More weight with fewer reps
+- **WHEN** Latzug last held "75" and "10, 10, 10", and today holds "80" and "8, 7, 7"
+- **THEN** Latzug counts as improved, because 80 kg is heavier than any weight last time
+
+#### Scenario: Less weight with more reps
+- **WHEN** Latzug last held "75" and "8", and today holds "70" and "12"
+- **THEN** Latzug counts as done today but not as improved, because 70 kg is lighter than 75 kg
+
+#### Scenario: Own weight of a set
+- **WHEN** Bankdrücken last held "50" and "12@40, 10, 10", and today holds "50" and "12@45, 10, 10"
+- **THEN** Bankdrücken counts as improved, because both times have 20 reps at 50 kg, and 45 kg beats 40 kg
+
+#### Scenario: One heavier set
+- **WHEN** Latzug last held "75" and "10, 10, 10", and today holds "80" and "10, 8@75, 8@75"
+- **THEN** Latzug counts as improved, because 80 kg is heavier than any weight last time
+
+#### Scenario: The heaviest weight decides first
+- **WHEN** Bankdrücken last held "50" and "10, 10, 10, 12@40", and today holds "50" and "10, 10, 9, 15@40"
+- **THEN** Bankdrücken counts as done today but not as improved, because 29 reps at 50 kg are fewer than 30, whatever happened at 40 kg
+
+#### Scenario: Extra lighter set
+- **WHEN** Bankdrücken last held "50" and "10, 10, 10", and today holds "50" and "12@30, 10, 10, 10"
+- **THEN** Bankdrücken counts as improved, because both times have 30 reps at 50 kg, and only today has sets at a lighter weight
+
+### Requirement: "Improved" needs readable cells both times
+An exercise SHALL NOT count as improved when it has no last time, or when its weight or reps cell is unreadable today or last time. It SHALL still count as done today when its reps cell holds a set.
 
 #### Scenario: Never done before
 - **WHEN** Duale Schulterpresse has no last time and today holds "30" and "12"
 - **THEN** it counts as done today but not as improved
 
 #### Scenario: Unreadable entry last time
-- **WHEN** an exercise last held "?, 9, 7" at 50 kg, and today holds "50" and "1, 9, 7"
-- **THEN** it counts as done today but not as improved, because the first position is not compared
+- **WHEN** an exercise last held "?, 9, 7" at 50 kg, and today holds "50" and "1, 10, 7"
+- **THEN** it counts as done today but not as improved, because last time's total is unknown
+
+#### Scenario: Unreadable weight last time
+- **WHEN** an exercise last held "25 (Seil)" and "10, 10", and today holds "25" and "10, 10"
+- **THEN** it counts as done today but not as improved
+
+#### Scenario: Unreadable weight today
+- **WHEN** an exercise last held "20" and "5", and today holds "25 (Seil)" and "10"
+- **THEN** it counts as done today but not as improved
+
+### Requirement: Assisted exercises improve with less weight
+An exercise whose name contains "(assistiert)", ignoring case, SHALL count as assisted, and its weight SHALL be the assistance it got. For an assisted exercise, the reps per weight SHALL be listed from the lightest weight up, so that at the first difference the lighter weight wins, or at the same weight the larger total. Everything else about "improved" SHALL stay the same. An empty weight SHALL count as 0 kg, meaning no assistance.
+
+#### Scenario: Less assistance
+- **WHEN** Klimmzüge (assistiert) last held "30" and "8, 8, 8", and today holds "25" and "6, 6, 5"
+- **THEN** it counts as improved, because 25 kg is less assistance than any weight last time
+
+#### Scenario: More assistance with more reps
+- **WHEN** Klimmzüge (assistiert) last held "25" and "8, 8", and today holds "30" and "10, 10"
+- **THEN** it counts as done today but not as improved, because 30 kg is more assistance than 25 kg
+
+#### Scenario: Same assistance with more reps
+- **WHEN** Klimmzüge (assistiert) last held "25" and "8, 8, 8", and today holds "25" and "9, 8, 8"
+- **THEN** it counts as improved, because 25 reps beat 24
+
+#### Scenario: No assistance
+- **WHEN** Klimmzüge (assistiert) last held "20" and "8, 8", and today holds an empty weight and "3"
+- **THEN** it counts as improved, because no assistance beats 20 kg
+
+#### Scenario: Marker in another case
+- **WHEN** Dips (Assistiert) last held "20" and "10", and today holds "15" and "8"
+- **THEN** it counts as improved, because it is an assisted exercise and 15 kg is less assistance than 20 kg
+
+#### Scenario: Name without the marker
+- **WHEN** Assisted Pullups last held "30" and "8", and today holds "25" and "8"
+- **THEN** it counts as done today but not as improved, because without "(assistiert)" in its name it is not an assisted exercise
 
 ### Requirement: Tiles show each exercise's state today
 Each tile SHALL show whether its exercise is not done today, done today, or improved, with a distinct colour for each state. An improved exercise SHALL show only the improved colour. A tile SHALL change its state as soon as the exercise's state changes. While an exercise has input marked as invalid, its tile SHALL keep its previous state.
@@ -123,8 +194,8 @@ Each tile SHALL show whether its exercise is not done today, done today, or impr
 - **THEN** its tile changes from the "not done" colour to the "done" colour
 
 #### Scenario: Colour changes with an improvement
-- **WHEN** the user enters a set that beats last time's set at the same position and leaves the field
-- **THEN** its tile shows the "improved" colour
+- **WHEN** Latzug last held "75" and "10, 10, 10", today holds "75" and "10, 10, 10", and the user enters 1 in a fourth set field and leaves it
+- **THEN** its tile changes from the "done" colour to the "improved" colour
 
 #### Scenario: Invalid input
 - **WHEN** an exercise is done today and the user enters "abc" in a set field and leaves it

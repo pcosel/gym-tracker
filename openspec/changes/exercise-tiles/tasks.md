@@ -2,7 +2,7 @@
 
 Worktree: add-styling
 
-Groups 1–5 are implemented in the git worktree above, on branch `worktree-add-styling`, which matches `main` (`aa6737e`) when this change starts.
+Groups 1–5 and 7 are implemented in the git worktree above, on branch `worktree-add-styling`. It matches `main` when this change starts (`aa6737e`) and again when group 7 starts (`4eda6c7`).
 - **Serving:** run `python -m http.server 8000 --directory <worktree path>` and open `http://localhost:8000`.
 - **Sheet:** every browser check before group 6 runs against the development sheet, never the real one.
 - **Previous workout:** several checks need an exercise with a "last time". Use one the development sheet already has, or type an earlier dated row into the development sheet by hand.
@@ -95,20 +95,57 @@ Groups 1–5 are implemented in the git worktree above, on branch `worktree-add-
 
   Verify that after the reload the tiles and the counter show the same states as before it, and that only today's row changed in the development sheet.
 - [x] 5.2 Commit all work in the worktree. From the main checkout, fast-forward `main` to the worktree branch (`git merge --ff-only worktree-add-styling`). Do not push. Verify that `git log main -1` matches the worktree branch head, and that `git status` on `main` is clean.
-- [ ] 5.3 (Manual, user) Push `main` to `origin`. Verify that the `pages-build-deployment` run for that commit succeeds, or that the deployed `today.js` matches the commit.
+- [x] 5.3 (Manual, user) Push `main` to `origin`. Verify that the `pages-build-deployment` run for that commit succeeds, or that the deployed `today.js` matches the commit.
 
 ## 6. Live verification
 
 These checks run against the deployed site after 5.3, so they are checked off in a follow-up commit.
 
-- [ ] 6.1 Read-only check on a desktop browser at `https://pcosel.github.io/gym-tracker/`. Sign in, and check that the tiles and counter show the real sheet's state for today. Open a few tiles without typing. Verify that the Network tab shows no `values:batchUpdate` and that the console shows no errors from this app's code.
+- [x] 6.1 Read-only check on a desktop browser at `https://pcosel.github.io/gym-tracker/`. Sign in, and check that the tiles and counter show the real sheet's state for today. Open a few tiles without typing. Verify that the Network tab shows no `values:batchUpdate` and that the console shows no errors from this app's code.
 - [ ] 6.2 (Manual, user) At the next workout, log it with the app on the phone. Record in this task:
   - whether the tile colours matched what you expected, especially "improved";
   - whether switching tiles with the keyboard open saved the field you were in;
   - whether the two-letter labels were workable until icons arrive.
 
+  First finding: "improved" did not match expectations. At the same weight, `9, 9, 9 → 11, 8, 8` turned green although two sets got worse, and `9, 11, 9 → 11, 9, 9` turned green for the same sets in another order. Group 7 replaces the rule, so check the colours again after 7.5. The other two checks are still open.
+
+## 7. "Improved" by total reps, and assisted exercises
+
+The first workout showed that comparing sets by position is too generous (see 6.2). These tasks replace that rule with the spec's "'Improved' means more reps, heaviest weight first" and "'Improved' needs readable cells both times". They also add "Assisted exercises improve with less weight". All three are implemented as in design.md ("Progress state" and "Assisted exercises").
+
+- [x] 7.1 Rewrite `progressOf` in `workout.js` as in design.md ("Progress state" and "Assisted exercises"):
+  - add the `assisted` flag to each exercise in `buildToday`;
+  - add the `assisted` parameter to `progressOf`;
+  - pass `item.exercise.assisted` at both `progressOf` calls in `today.js`.
+
+  Update the progress tests in `tests/workout.test.js`:
+  - replace the position-based tests with one test per scenario of the three requirements on "improved";
+  - test that `buildToday` sets `assisted` for "Klimmzüge (assistiert)" and "Dips (Assistiert)", and not for "Assisted Pullups";
+  - four existing tests change their result:
+    - "Workout in progress": `9, 7, 8` → `9, 8` is now `done`, and `9, 8, 8` is `improved`;
+    - "Own weight of a set" uses the new scenario;
+    - "Extra set" is now `improved`;
+    - "Unreadable entry last time": `1, 10, 7` is now `done`.
+  - keep the tests for "done", for a set without any weight counting as 0 kg, and for an unreadable weight today.
+
+  Verify that `npm test` passes.
+- [x] 7.2 Update the green bullet in `README.md` ("Workout screen") to the new rule: reps are added up per weight and compared from the heaviest weight down, so the order of the sets does not matter and an extra set counts. Add that for an exercise with "(assistiert)" in its name, the weight is the assistance, so less weight counts as better and an empty weight means no assistance. Remove the sentence about positions. Verify that it matches the spec.
+- [x] 7.3 Verify on `localhost` against the development sheet. Give Latzug a last time of "75" and "10, 10, 10" and no values today, then:
+  - "Workout in progress": entering 10, 10 and 10, leaving the field after each, keeps its tile blue;
+  - "Colour changes with an improvement": a fourth set of 1 turns it green;
+  - deleting the fourth set turns it blue again, and so does changing the sets to 12, 9, 9;
+  - after a reload, the tile shows the same state as before it.
+
+  Then rename the development sheet's pull-up column, or another column, to "Klimmzüge (assistiert)". Give it a last time of "30" and "8, 8, 8" and no values today, then:
+  - "Less assistance": weight 25 with sets 6, 6, 5 turns its tile green;
+  - changing the weight to 35 turns it blue;
+  - its tile label is "Kl", and its editor heading shows the full name.
+- [ ] 7.4 Run `npm test`. Commit all work in the worktree. From the main checkout, fast-forward `main` to the worktree branch (`git merge --ff-only worktree-add-styling`). Do not push. Verify that `git log main -1` matches the worktree branch head, and that `git status` on `main` is clean.
+- [ ] 7.5 (Manual, user) Push `main` to `origin`. Verify that the `pages-build-deployment` run for that commit succeeds, or that the deployed `workout.js` matches the commit.
+- [ ] 7.6 (Manual, user) In the real sheet's 2026 tab, rename "Assisted Pullups" to "Klimmzüge (assistiert)". The renaming itself can happen at any time, because the app before 7.5 treats the renamed column as a normal exercise. After 7.5, verify in the app that its tile shows "Kl", and that a weight below last time's with the same reps would turn it green.
+
 ## Workflow follow-up
 
-- Once group 6 passes, run `/opsx:archive` on `main`. It applies the delta to `specs/todays-workout` and moves this change to `openspec/changes/archive/`.
+- Once groups 6 and 7 pass, run `/opsx:archive` on `main`. It applies the delta to `specs/todays-workout` and moves this change to `openspec/changes/archive/`.
 - Commit the checked-off tasks and the archive together. The user pushes `main` by hand.
 - Remove the `add-styling` worktree and its `worktree-add-styling` branch once `main` contains them.
