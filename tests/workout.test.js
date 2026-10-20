@@ -1,8 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  buildToday, initialState, cellsFor, writesFor, removeSet, tileLabels, progressOf,
+  buildToday, initialState, cellsFor, writesFor, removeSet, tileLabels, progressOf, splitAssisted,
 } from '../workout.js';
+import { iconFor } from '../icons.js';
 
 // All data below is made up. Columns: B/C Bankdrücken, D/E Latzug,
 // F/G Beinpresse, H/I Bizepsmaschine, J/K Duale Schulterpresse.
@@ -301,6 +302,24 @@ test('Tile labels: when every pair is taken the first pair stays', () => {
   assert.deepEqual(tileLabels(['Abb', 'Abb', 'Abb']), ['Ab', 'Ab', 'Ab']);
 });
 
+const withIcons = (names) => tileLabels(names, (name) => iconFor(name) !== null);
+
+test('Tile labels: plain label, several words and shared first letters', () => {
+  assert.deepEqual(withIcons(['Kniebeuge']), ['Kn']);
+  assert.deepEqual(withIcons(['Schräges Bankdrücken']), ['Sc']);
+  assert.deepEqual(withIcons(['Wadenheben', 'Wadenpresse']), ['Wa', 'Wd']);
+  assert.deepEqual(withIcons(['Wadenheben', 'Wadenpresse', 'Wadenstrecker']), ['Wa', 'Wd', 'We']);
+});
+
+test('Tile labels: icon tiles do not take labels', () => {
+  assert.deepEqual(withIcons(['Bankdrücken', 'Bauchmaschine', 'Bauchpresse']), [null, null, 'Ba']);
+});
+
+test('Tile labels: a different spelling shows letters, an assisted name an icon', () => {
+  assert.deepEqual(withIcons(['Klimmzug']), ['Kl']);
+  assert.deepEqual(withIcons(['Klimmzüge (assistiert)']), [null]);
+});
+
 // The exercise at Latzug's columns as buildToday reads it, with last time's
 // cells in the row before today's. `name` renames the column.
 function exerciseOf(weightText, repsText, name = 'Latzug') {
@@ -319,6 +338,20 @@ test('Assisted: the name marker is found in any case, and only that', () => {
   assert.equal(exerciseOf('', '', 'Dips (Assistiert)').assisted, true);
   assert.equal(exerciseOf('', '', 'Assisted Pullups').assisted, false);
   assert.equal(exerciseOf('', '', 'Latzug').assisted, false);
+});
+
+test('splitAssisted: the marker is removed and reported', () => {
+  assert.deepEqual(splitAssisted('Klimmzüge (assistiert)'), { base: 'Klimmzüge', assisted: true });
+});
+
+test('splitAssisted: other case and spacing give the same result', () => {
+  const expected = { base: 'Klimmzüge', assisted: true };
+  assert.deepEqual(splitAssisted('Klimmzüge(Assistiert)'), expected);
+  assert.deepEqual(splitAssisted('Klimmzüge  (assistiert) '), expected);
+});
+
+test('splitAssisted: a name without the marker is unchanged', () => {
+  assert.deepEqual(splitAssisted('Latzug'), { base: 'Latzug', assisted: false });
 });
 
 test('Progress: done means at least one set with reps', () => {

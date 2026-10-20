@@ -9,19 +9,19 @@ Groups 1–5 are implemented in the git worktree above, on branch `worktree-exer
 
 ## 1. Branch up to date
 
-- [ ] 1.1 In the worktree, run `git merge --ff-only main`. Verify that:
+- [x] 1.1 In the worktree, run `git merge --ff-only main`. Verify that:
   - the branch head is `main`'s head (`ba3f675` or later), with the archived `exercise-tiles` and the assisted-exercise rule;
   - `npm test` passes before any change.
 
 ## 2. Icon data and lookup
 
-- [ ] 2.1 Add `splitAssisted(name)` to `workout.js` and use it for the `assisted` flag in `buildToday`, as in design.md ("Assisted exercises"). Keep the existing assisted tests unchanged. Add tests to `tests/workout.test.js`:
+- [x] 2.1 Add `splitAssisted(name)` to `workout.js` and use it for the `assisted` flag in `buildToday`, as in design.md ("Assisted exercises"). Keep the existing assisted tests unchanged. Add tests to `tests/workout.test.js`:
   - "Klimmzüge (assistiert)" gives base "Klimmzüge" and `assisted`;
   - "Klimmzüge(Assistiert)" and "Klimmzüge  (assistiert) " give the same;
   - "Latzug" gives base "Latzug" and not `assisted`.
 
   Verify that `npm test` passes.
-- [ ] 2.2 Add `icons.js` with `ICONS`, copied exactly from the appendix of design.md, and `iconFor(name)` as in design.md ("`icons.js`: data plus a lookup, no DOM"). Add `tests/icons.test.js` for:
+- [x] 2.2 Add `icons.js` with `ICONS`, copied exactly from the appendix of design.md, and `iconFor(name)` as in design.md ("`icons.js`: data plus a lookup, no DOM"). Add `tests/icons.test.js` for:
   - the scenario "Exercise with an icon": each of the 16 names returns its entry, and `ICONS` has exactly these 16 keys;
   - "Different case": `LATZUG` returns Latzug's entry;
   - "Assisted exercise": `Latzug (assistiert)` returns Latzug's entry;
@@ -36,7 +36,7 @@ Groups 1–5 are implemented in the git worktree above, on branch `worktree-exer
 
 ## 3. Labels only for tiles without an icon
 
-- [ ] 3.1 Give `tileLabels` in `workout.js` the predicate `hasIcon`, defaulting to `() => false`, as in design.md ("Labels only for tiles without an icon"). Keep the existing label tests unchanged. Add tests to `tests/workout.test.js` for the scenarios of "Tile labels are unique":
+- [x] 3.1 Give `tileLabels` in `workout.js` the predicate `hasIcon`, defaulting to `() => false`, as in design.md ("Labels only for tiles without an icon"). Keep the existing label tests unchanged. Add tests to `tests/workout.test.js` for the scenarios of "Tile labels are unique":
   - "Plain label": Kniebeuge gives `Kn`;
   - "Name with several words": Schräges Bankdrücken gives `Sc`;
   - "Two names with the same first letters": Wadenheben, Wadenpresse give `Wa`, `Wd`;
@@ -51,7 +51,7 @@ Groups 1–5 are implemented in the git worktree above, on branch `worktree-exer
 
 ## 4. Tiles show icons
 
-- [ ] 4.1 In `today.js`, give each item its `icon` from `iconFor(exercise.name)`, pass the predicate to `tileLabels`, and build the tile's `<svg>` with `createElementNS` as in design.md ("Rendering in `today.js`"). Tiles without an icon keep `textContent = label`. Verify on `localhost`:
+- [x] 4.1 In `today.js`, give each item its `icon` from `iconFor(exercise.name)`, pass the predicate to `tileLabels`, and build the tile's `<svg>` with `createElementNS` as in design.md ("Rendering in `today.js`"). Tiles without an icon keep `textContent = label`. Verify on `localhost`:
   - "Exercise with an icon" and "Icon or label": the 16 exercises show icons and no letters, and every other exercise shows letters;
   - "Every icon is different": each icon tile shows a different icon;
   - "Assisted Klimmzüge": the development sheet's "Klimmzüge (assistiert)" shows the figure with the arrow. If the development sheet still names it differently, rename its pull-up column to "Klimmzüge (assistiert)" first, as the real sheet is;
@@ -65,13 +65,13 @@ Groups 1–5 are implemented in the git worktree above, on branch `worktree-exer
 
     Restore the header afterwards.
   - the console shows no errors.
-- [ ] 4.2 Add the icon size to `styles.css` as in design.md ("Size in the tile"). Verify in DevTools device mode at 360px and 430px width:
+- [x] 4.2 Add the icon size to `styles.css` as in design.md ("Size in the tile"). Verify in DevTools device mode at 360px and 430px width:
   - the icons are 32px, centred and not clipped;
   - the icons are visible on all three state colours ("Icon on a coloured tile");
   - the selection outline and the keyboard focus ring look as before.
 
   Also verify with DevTools' Rendering option "forced-colors: active" that the icons stay visible.
-- [ ] 4.3 Update `README.md` ("Tiles"):
+- [x] 4.3 Update `README.md` ("Tiles"):
   - which 16 exercises show icons;
   - that names match ignoring case and the "(assistiert)" marker, and that any other spelling shows letters;
   - that only assisted Klimmzüge show the assistance arrow;
@@ -79,14 +79,14 @@ Groups 1–5 are implemented in the git worktree above, on branch `worktree-exer
   - that a new icon is an entry in `icons.js` drawn by the rules in this change's design.
 
   Verify that the README describes each behaviour observed in 4.1.
-- [ ] 4.4 (Manual, user) On `localhost` at 360px width, with some tiles done and some improved, look at the tile grid next to `icons.svg`. Confirm that the icons look as approved, especially:
+- [x] 4.4 (Manual, user) On `localhost` at 360px width, with some tiles done and some improved, look at the tile grid next to `icons.svg`. Confirm that the icons look as approved, especially:
   - Brustpresse next to Ruderzug;
   - Schulterpresse next to Duale Schulterpresse;
   - the arrow on Klimmzüge (assistiert).
 
 ## 5. Integration and merge
 
-- [ ] 5.1 Run `npm test`. On `localhost`, do one complete pass on a day without a row for today in the development sheet:
+- [x] 5.1 Run `npm test`. On `localhost`, do one complete pass on a day without a row for today in the development sheet:
   1. Open two icon tiles, among them Klimmzüge (assistiert), and one letter tile, and log sets in each.
   2. Reload the page.
 

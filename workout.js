@@ -17,6 +17,14 @@ const DEFAULT_SET_FIELDS = 3;
 const NUMBER_PATTERN = /^\d+(?:[.,]\d+)?$/;
 const WHOLE_PATTERN = /^\d+$/;
 
+// An exercise name split at its "(assistiert)" marker: `base` is the name with
+// every marker removed, ignoring case, spaces collapsed and trimmed, and
+// `assisted` tells whether there was one.
+export function splitAssisted(name) {
+  const base = name.replace(/\(assistiert\)/gi, ' ').replace(/\s+/g, ' ').trim();
+  return { base, assisted: /\(assistiert\)/i.test(name) };
+}
+
 // `rows` is the tab as read: index i is sheet row i + 1. Returns
 // { todayRow, nextRow, exercises }, where todayRow is a 1-based row number or
 // null, and nextRow the first row below every row that holds any value. Each
@@ -72,7 +80,7 @@ export function buildToday(rows, today) {
       name,
       weightCol,
       repsCol,
-      assisted: /\(assistiert\)/i.test(name),
+      assisted: splitAssisted(name).assisted,
       today: todayEntry,
       last,
     };
@@ -190,10 +198,12 @@ export function writesFor({ weightCol }, { weightText, repsText }, { row, creati
 // One label per exercise name, in header order: the first letter and a second
 // letter, so that no two labels are equal ignoring case. Only letters count.
 // When the first two letters are taken, the first letter is paired with each
-// later letter in turn; when none is free, the first pair stays.
-export function tileLabels(names) {
+// later letter in turn; when none is free, the first pair stays. A name for
+// which `hasIcon` is true gets null and takes no label.
+export function tileLabels(names, hasIcon = () => false) {
   const taken = new Set();
   return names.map((name) => {
+    if (hasIcon(name)) return null;
     const letters = [...name].filter((char) => /\p{L}/u.test(char));
     if (letters.length === 0) {
       const label = [...name].slice(0, 2).join('');

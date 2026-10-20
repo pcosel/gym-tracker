@@ -121,6 +121,7 @@ input[aria-invalid="true"] { border: 2px solid var(--danger); background: #fdece
   border-radius: var(--radius);
   transition: background-color 150ms, color 150ms;
 }
+#tiles button svg { display: block; width: 2rem; height: 2rem; margin: 0 auto; }
 #tiles button[data-state="done"] { color: #fff; background: var(--done); border-color: var(--done); }
 #tiles button[data-state="improved"] { color: #fff; background: var(--improved); border-color: var(--improved); }
 #tiles button[aria-pressed="true"] { outline: 3px solid var(--text); outline-offset: 2px; }

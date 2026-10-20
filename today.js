@@ -6,11 +6,13 @@ import { readTab, writeCells } from './api.js';
 import {
   buildToday, initialState, cellsFor, writesFor, removeSet, tileLabels, progressOf,
 } from './workout.js';
+import { iconFor } from './icons.js';
 
 const $ = (id) => document.getElementById(id);
 
 // One entry per exercise of the header row, in header order:
-// { exercise, state, label, progress, tile, element }.
+// { exercise, state, icon, label, progress, tile, element }. A tile shows its
+// icon, or its label when it has none.
 let items = [];
 let selected = null;
 let tab = '';
@@ -43,10 +45,14 @@ export function startWorkout({ tab: tabTitle, rows, today: date }) {
   today = date;
   const model = buildToday(rows, date);
   todayRow = model.todayRow;
-  const labels = tileLabels(model.exercises.map((exercise) => exercise.name));
+  const labels = tileLabels(
+    model.exercises.map((exercise) => exercise.name),
+    (name) => iconFor(name) !== null,
+  );
   items = model.exercises.map((exercise, i) => ({
     exercise,
     state: initialState(exercise),
+    icon: iconFor(exercise.name),
     label: labels[i],
     progress: progressOf(
       exercise.today || { weightText: '', repsText: '' },
@@ -196,10 +202,38 @@ const STATE_TEXT = {
   improved: 'improved on last time',
 };
 
+const SVG_NS = 'http://www.w3.org/2000/svg';
+
+function svgElement(name, attributes) {
+  const element = document.createElementNS(SVG_NS, name);
+  for (const [key, value] of Object.entries(attributes)) element.setAttribute(key, String(value));
+  return element;
+}
+
+function buildIcon({ d, dots = [], rings = [] }) {
+  const svg = svgElement('svg', {
+    viewBox: '0 0 24 24',
+    fill: 'none',
+    stroke: 'currentColor',
+    'stroke-width': 2,
+    'stroke-linecap': 'round',
+    'stroke-linejoin': 'round',
+    'aria-hidden': 'true',
+    focusable: 'false',
+  });
+  svg.append(svgElement('path', { d }));
+  for (const [cx, cy, r] of dots) {
+    svg.append(svgElement('circle', { cx, cy, r, fill: 'currentColor', stroke: 'none' }));
+  }
+  for (const [cx, cy, r] of rings) svg.append(svgElement('circle', { cx, cy, r }));
+  return svg;
+}
+
 function buildTile(item) {
   const tile = document.createElement('button');
   tile.type = 'button';
-  tile.textContent = item.label;
+  if (item.icon) tile.append(buildIcon(item.icon));
+  else tile.textContent = item.label;
   tile.addEventListener('click', () => selectItem(item));
   item.tile = tile;
   renderTile(item);

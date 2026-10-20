@@ -66,7 +66,12 @@ The screen shows today's date, the number of exercises done today, the save stat
 
 ### Tiles
 
-- A tile shows two letters of the exercise's name: the first letter and the second, ignoring anything that is not a letter. If an earlier tile already has that label (ignoring case), the second letter becomes the next letter of the name that is still free. The full name is the tile's tooltip and part of its accessible name.
+- A tile shows an icon if the exercise has one, and two letters of its name otherwise. The full name is the tile's tooltip and part of its accessible name.
+- These 16 exercises have an icon: Bankdrücken, Bauchmaschine, Rückenheben, Bizepsmaschine, Seitheber, Schulterpresse, Trizepspull, Ruderzug, Butterfly, Beinpresse, Klimmzüge, Beinstrecker, Latzug, Duale Schulterpresse, Brustpresse and Crunchmaschine.
+  - A header name matches ignoring upper and lower case and an "(assistiert)" marker. Any other spelling, such as "Klimmzug", shows letters instead of a wrong icon.
+  - Only "Klimmzüge (assistiert)" shows the upward assistance arrow. Klimmzüge without the marker shows the same figure without it, and no other exercise has an arrow.
+  - A new icon is a new entry in `icons.js`, drawn by the rules in the design of the `exercise-icons` change.
+- The letters are the first letter of the name and a second letter, ignoring anything that is not a letter. If an earlier tile that shows letters already has that label (ignoring case), the second letter becomes the next letter of the name that is still free. Tiles with an icon take no label, so a new "Bauchpresse" shows "Ba".
 - A tile has one of three colours:
   - white: not done today;
   - blue: done today, meaning the reps cell holds at least one set. A weight alone does not count;
