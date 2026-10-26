@@ -91,19 +91,21 @@ Groups 1–5 are implemented in the git worktree above, on branch `worktree-exer
   2. Reload the page.
 
   Verify that after the reload the tiles show the same icons, labels and states as before it, and that only today's row changed in the development sheet.
-- [ ] 5.2 Commit all work in the worktree. From the main checkout, fast-forward `main` to the worktree branch (`git merge --ff-only worktree-exercise-icons`). Do not push. Verify that `git log main -1` matches the worktree branch head, and that `git status` on `main` is clean.
-- [ ] 5.3 (Manual, user) Push `main` to `origin`. Verify that the `pages-build-deployment` run for that commit succeeds, or that the deployed `icons.js` matches the commit.
+- [x] 5.2 Commit all work in the worktree. From the main checkout, fast-forward `main` to the worktree branch (`git merge --ff-only worktree-exercise-icons`). Do not push. Verify that `git log main -1` matches the worktree branch head, and that `git status` on `main` is clean.
+- [x] 5.3 (Manual, user) Push `main` to `origin`. Verify that the `pages-build-deployment` run for that commit succeeds, or that the deployed `icons.js` matches the commit.
 
 ## 6. Live verification
 
 These checks run against the deployed site after 5.3, so they are checked off in a follow-up commit.
 
-- [ ] 6.1 Read-only check on a desktop browser at `https://pcosel.github.io/gym-tracker/`. Sign in and check that:
+- [x] 6.1 Read-only check on a desktop browser at `https://pcosel.github.io/gym-tracker/`. Sign in and check that:
   - the 16 exercises of the real sheet show icons, and any others show letters;
   - "Klimmzüge (assistiert)" shows the arrow.
 
   Open a few tiles without typing. Verify that the Network tab shows no `values:batchUpdate` and that the console shows no errors from this app's code.
-- [ ] 6.2 (Manual, user) At the next workout, log it with the app on the phone. Record in this task whether every icon was recognisable at a glance, and which ones, if any, were confused.
+- [x] 6.2 (Manual, user) At the next workout, log it with the app on the phone. Record in this task whether every icon was recognisable at a glance, and which ones, if any, were confused.
+
+  Result (2026-10-26): used at the last workout; every icon was recognisable at a glance, none were confused.
 
 ## Workflow follow-up
 
