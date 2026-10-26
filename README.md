@@ -76,8 +76,12 @@ The screen shows today's date, the number of exercises done today, the save stat
   - white: not done today;
   - blue: done today, meaning the reps cell holds at least one set. A weight alone does not count;
   - green: improved, meaning more reps than last time. The reps are added up per weight and compared from the heaviest weight down, so the order of the sets does not matter and an extra set counts. A set's weight is its own `@` weight, otherwise the exercise weight, otherwise 0 kg. For an exercise with "(assistiert)" in its name, the weight is the assistance, so less weight counts as better and an empty weight means no assistance.
+- A white tile with a blue border is not done today, but was done in the last workout. Its accessible name then ends with "done in the last workout". When the tile turns blue or green the border goes, and it comes back if the reps are deleted again.
+  - The last workout is the nearest dated row above today's row (or the lowest row, if there is none for today yet) in which any exercise has reps. Rows with only a date or only weights are skipped, and an exercise counts as done there when its reps cell holds at least one set, readable or not.
+  - It differs from "last time", which is per exercise and reaches back as far as needed: an exercise skipped in the last workout has no border, though it still has a last time for the prefill and the green rule.
+  - At the start of a year there is no border until a workout row with reps exists, because the carry-over row holds last year's final values and is not one workout.
 - The colour follows the values on screen: it changes when you leave a field or delete a set, and it keeps its state while a field is marked invalid.
-- The counter at the top counts the blue and green tiles.
+- The counter at the top counts the blue and green tiles. A border does not count.
 
 ### Prefill
 

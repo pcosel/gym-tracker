@@ -8,11 +8,11 @@ Groups 1–4 are implemented in the git worktree above, on branch `worktree-high
 
 ## 1. Branch up to date
 
-- [ ] 1.1 In the worktree, check that the branch contains `main`'s head (`git merge-base --is-ancestor main HEAD`). If `main` has moved on, for example by archiving `exercise-icons`, rebase the branch onto `main`. Verify that `npm test` passes before any change.
+- [x] 1.1 In the worktree, check that the branch contains `main`'s head (`git merge-base --is-ancestor main HEAD`). If `main` has moved on, for example by archiving `exercise-icons`, rebase the branch onto `main`. Verify that `npm test` passes before any change.
 
 ## 2. The last workout
 
-- [ ] 2.1 In `workout.js`, make `buildToday` parse the header once, and add `lastWorkoutRow` and each exercise's `doneLastWorkout`, as in design.md ("Find the last workout in `buildToday`, from the reps cells"). Update the comment above `buildToday` to describe the new fields. Keep the existing tests unchanged. Add tests to `tests/workout.test.js`, using the existing `tab()` rows unless stated otherwise:
+- [x] 2.1 In `workout.js`, make `buildToday` parse the header once, and add `lastWorkoutRow` and each exercise's `doneLastWorkout`, as in design.md ("Find the last workout in `buildToday`, from the reps cells"). Update the comment above `buildToday` to describe the new fields. Keep the existing tests unchanged. Add tests to `tests/workout.test.js`, using the existing `tab()` rows unless stated otherwise:
   - "Previous workout": `tab()` gives `lastWorkoutRow` 5. Bankdrücken and Latzug are done in it. Bizepsmaschine (weight only), Beinpresse (reps only in the carry-over row) and Duale Schulterpresse are not;
   - "Workout already started": with `['15.10.2026', '', '', '75', '10']` added, `lastWorkoutRow` is still 5;
   - "Row without reps is skipped": with a row `13.10.2026` holding only a Bizepsmaschine weight, and a row holding only `14.10.2026`, `lastWorkoutRow` is 5 and Bizepsmaschine is not done in it;
@@ -26,7 +26,7 @@ Groups 1–4 are implemented in the git worktree above, on branch `worktree-high
 
 ## 3. Tiles show the border
 
-- [ ] 3.1 In `today.js`, have `renderTile` set `data-last-workout` and extend the accessible name, as in design.md ("A data attribute, styled together with the state" and "Accessible name"). Add the border rule to `styles.css`. Verify on `localhost`, on a day without a row for today in the development sheet:
+- [x] 3.1 In `today.js`, have `renderTile` set `data-last-workout` and extend the accessible name, as in design.md ("A data attribute, styled together with the state" and "Accessible name"). Add the border rule to `styles.css`. Verify on `localhost`, on a day without a row for today in the development sheet:
   - "Done in the last workout, not yet today" and "Not done in the last workout": the tiles with a blue border are exactly the exercises with reps in the lowest dated row with reps. Compare against the sheet;
   - "The counter counts only today": on load, the counter shows 0 exercises done today;
   - "Selected tile": a selected bordered tile shows both the border and the selection outline;
@@ -37,13 +37,13 @@ Groups 1–4 are implemented in the git worktree above, on branch `worktree-high
   - the console shows no errors.
 
   "No last workout" is covered by the tests in 2.1.
-- [ ] 3.2 In DevTools device mode at 360px and 430px width, verify that:
+- [x] 3.2 In DevTools device mode at 360px and 430px width, verify that:
   - the border is 2px in the "done" blue;
   - a bordered tile has the same size as a plain one, and its icon or label sits in the same place;
   - keyboard focus (Tab) on a bordered tile, selected or not, can still be told apart from the border.
 
   With DevTools' Rendering option "forced-colors: active", verify that bordered tiles still show a thicker border.
-- [ ] 3.3 Update `README.md` ("Tiles"):
+- [x] 3.3 Update `README.md` ("Tiles"):
   - a white tile with a blue border is not done today but was done in the last workout;
   - what the last workout is: the nearest dated row above today's row with any reps;
   - why it differs from "last time";
@@ -51,11 +51,11 @@ Groups 1–4 are implemented in the git worktree above, on branch `worktree-high
   - that the counter still counts only blue and green tiles.
 
   Verify that the README describes each behaviour observed in 3.1.
-- [ ] 3.4 (Manual, user) On `localhost` at 360px width, with some tiles bordered, some done and some improved, confirm that a bordered tile is easy to tell apart from a plain white tile and from a blue one. If the 2px width is not right, change it in `styles.css` and design.md before group 4.
+- [x] 3.4 (Manual, user) On `localhost` at 360px width, with some tiles bordered, some done and some improved, confirm that a bordered tile is easy to tell apart from a plain white tile and from a blue one. If the 2px width is not right, change it in `styles.css` and design.md before group 4.
 
 ## 4. Integration and merge
 
-- [ ] 4.1 Run `npm test`. On `localhost`, do one complete pass on a day without a row for today in the development sheet:
+- [x] 4.1 Run `npm test`. On `localhost`, do one complete pass on a day without a row for today in the development sheet:
   1. Note which tiles show the border.
   2. Log sets in one bordered and one plain tile.
   3. Reload the page.

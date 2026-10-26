@@ -26,10 +26,14 @@ export function splitAssisted(name) {
 }
 
 // `rows` is the tab as read: index i is sheet row i + 1. Returns
-// { todayRow, nextRow, exercises }, where todayRow is a 1-based row number or
-// null, and nextRow the first row below every row that holds any value. Each
-// exercise is { name, weightCol, repsCol, assisted, today, last }. `today` is null when
-// today's row has neither a weight nor reps for it.
+// { todayRow, nextRow, lastWorkoutRow, exercises }, where todayRow is a 1-based
+// row number or null, and nextRow the first row below every row that holds any
+// value. lastWorkoutRow is the lowest dated row above today's row (or the
+// lowest of all) with reps for any exercise, or null; the carry-over row never
+// counts. Each exercise is { name, weightCol, repsCol, assisted, today, last,
+// doneLastWorkout }. `today` is null when today's row has neither a weight nor
+// reps for it. `doneLastWorkout` tells whether its reps cell in lastWorkoutRow
+// holds any set, readable or not.
 export function buildToday(rows, today) {
   const cell = (row, col) => String((rows[row - 1] && rows[row - 1][col]) ?? '');
   const carryOver = hasCarryOverRow(rows);
@@ -56,8 +60,18 @@ export function buildToday(rows, today) {
     };
   };
   const hasReadableSet = (entry) => entry.reps.sets.some((set) => set !== null);
+  const hasEntry = (row, repsCol) => parseReps(cell(row, repsCol)).sets.length > 0;
 
-  const exercises = parseHeader(rows[0] || []).map(({ name, weightCol, repsCol }) => {
+  const header = parseHeader(rows[0] || []);
+  const start = todayRow !== null ? todayRow - 1 : rows.length;
+
+  let lastWorkoutRow = null;
+  for (let row = start; row >= firstWorkoutRow && lastWorkoutRow === null; row--) {
+    if (!parseDate(cell(row, 0))) continue;
+    if (header.some(({ repsCol }) => hasEntry(row, repsCol))) lastWorkoutRow = row;
+  }
+
+  const exercises = header.map(({ name, weightCol, repsCol }) => {
     let todayEntry = null;
     if (todayRow !== null) {
       const entry = read(todayRow, weightCol, repsCol);
@@ -65,7 +79,6 @@ export function buildToday(rows, today) {
     }
 
     let last = null;
-    const start = todayRow !== null ? todayRow - 1 : rows.length;
     for (let row = start; row >= firstWorkoutRow && last === null; row--) {
       if (!parseDate(cell(row, 0))) continue;
       const entry = read(row, weightCol, repsCol);
@@ -83,10 +96,11 @@ export function buildToday(rows, today) {
       assisted: splitAssisted(name).assisted,
       today: todayEntry,
       last,
+      doneLastWorkout: lastWorkoutRow !== null && hasEntry(lastWorkoutRow, repsCol),
     };
   });
 
-  return { todayRow, nextRow, exercises };
+  return { todayRow, nextRow, lastWorkoutRow, exercises };
 }
 
 // The editor's starting state for one exercise, with everything as the text

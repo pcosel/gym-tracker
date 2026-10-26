@@ -88,6 +88,63 @@ test('rows without a date are never "last time"', () => {
   assert.equal(byName(buildToday(rows, TODAY), 'Latzug').last.row, 5);
 });
 
+const doneLast = (model) => model.exercises.filter((e) => e.doneLastWorkout).map((e) => e.name);
+
+test('Previous workout: the lowest row with reps is the last workout', () => {
+  const model = buildToday(tab(), TODAY);
+  assert.equal(model.lastWorkoutRow, 5);
+  assert.deepEqual(doneLast(model), ['Bankdrücken', 'Latzug']);
+});
+
+test('Workout already started: the last workout lies above today\'s row', () => {
+  const model = buildToday(tab(['15.10.2026', '', '', '75', '10']), TODAY);
+  assert.equal(model.todayRow, 6);
+  assert.equal(model.lastWorkoutRow, 5);
+});
+
+test('Row without reps is skipped as the last workout', () => {
+  const rows = tab(['13.10.2026', '', '', '', '', '', '', '40', ''], ['14.10.2026']);
+  const model = buildToday(rows, TODAY);
+  assert.equal(model.lastWorkoutRow, 5);
+  assert.equal(byName(model, 'Bizepsmaschine').doneLastWorkout, false);
+});
+
+test('a row without a date is never the last workout', () => {
+  const model = buildToday(tab(['', '', '', '60', '5, 5, 5']), TODAY);
+  assert.equal(model.lastWorkoutRow, 5);
+});
+
+test('Exercise skipped in the last workout keeps its last time', () => {
+  const model = buildToday(tab(['13.10.2026', '', '', '75', '10']), TODAY);
+  assert.equal(model.lastWorkoutRow, 6);
+  assert.equal(byName(model, 'Latzug').doneLastWorkout, true);
+  const bench = byName(model, 'Bankdrücken');
+  assert.equal(bench.doneLastWorkout, false);
+  assert.equal(bench.last.row, 5);
+});
+
+test('Unreadable reps in the last workout still count as done', () => {
+  const mixed = byName(buildToday(tab(['13.10.2026', '', '', '', '?, 9, 7']), TODAY), 'Latzug');
+  assert.equal(mixed.doneLastWorkout, true);
+  const only = buildToday(tab(['13.10.2026', '', '', '', '?']), TODAY);
+  assert.equal(byName(only, 'Latzug').doneLastWorkout, true);
+  assert.equal(byName(only, 'Latzug').last.row, 5);
+});
+
+test('Start of a year: the carry-over row is not a last workout', () => {
+  const carryOver = ['2026', '', '', '70', '8, 8, 8'];
+  for (const rows of [[HEADER, carryOver], [HEADER, carryOver, ['15.10.2026', '', '', '75', '10']]]) {
+    const model = buildToday(rows, TODAY);
+    assert.equal(model.lastWorkoutRow, null);
+    assert.deepEqual(doneLast(model), []);
+  }
+});
+
+test('Without a carry-over row, row 2 can be the last workout', () => {
+  const model = buildToday([HEADER, ['12.10.2026', '', '', '70', '8']], TODAY);
+  assert.equal(model.lastWorkoutRow, 2);
+});
+
 test('Three fields by default', () => {
   const rows = tab();
   rows[4][4] = '9, 7';

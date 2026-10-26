@@ -124,6 +124,7 @@ input[aria-invalid="true"] { border: 2px solid var(--danger); background: #fdece
 #tiles button svg { display: block; width: 2rem; height: 2rem; margin: 0 auto; }
 #tiles button[data-state="done"] { color: #fff; background: var(--done); border-color: var(--done); }
 #tiles button[data-state="improved"] { color: #fff; background: var(--improved); border-color: var(--improved); }
+#tiles button[data-state="none"][data-last-workout] { border: 2px solid var(--done); }
 #tiles button[aria-pressed="true"] { outline: 3px solid var(--text); outline-offset: 2px; }
 #tiles button:focus-visible { outline: 3px solid var(--done); outline-offset: 2px; }
 #tiles button[aria-pressed="true"]:focus-visible { outline-color: var(--text); box-shadow: 0 0 0 5px var(--done); }

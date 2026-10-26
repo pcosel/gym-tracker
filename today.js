@@ -244,7 +244,12 @@ function renderTile(item) {
   const { tile, exercise, progress } = item;
   tile.dataset.state = progress;
   tile.setAttribute('aria-pressed', String(item === selected));
-  tile.setAttribute('aria-label', `${exercise.name}, ${STATE_TEXT[progress]}`);
+  const marked = progress === 'none' && exercise.doneLastWorkout;
+  tile.toggleAttribute('data-last-workout', exercise.doneLastWorkout);
+  tile.setAttribute(
+    'aria-label',
+    `${exercise.name}, ${STATE_TEXT[progress]}${marked ? ', done in the last workout' : ''}`,
+  );
   tile.title = exercise.name;
 }
 
