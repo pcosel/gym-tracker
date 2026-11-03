@@ -11,6 +11,8 @@ import {
   formatSets,
   columnLetter,
   rangeFor,
+  daysBetween,
+  sheetUrl,
 } from '../sheet-format.js';
 
 // All data below is made up. Cells are shaped like the real sheet's.
@@ -197,4 +199,47 @@ test('parsing a formatted reps cell gives back the same sets', () => {
     { reps: 10, weight: 55 },
   ];
   assert.deepEqual(parseReps(formatSets(sets, 50)).sets, sets);
+});
+
+const day = (d, m, y) => ({ y, m, d });
+
+test('A few days ago', () => {
+  assert.equal(daysBetween(day(12, 10, 2026), day(15, 10, 2026)), 3);
+});
+
+test('One day ago', () => {
+  assert.equal(daysBetween(day(14, 10, 2026), day(15, 10, 2026)), 1);
+});
+
+test('Across a month', () => {
+  assert.equal(daysBetween(day(12, 9, 2026), day(15, 10, 2026)), 33);
+});
+
+test('Across a clock change', () => {
+  assert.equal(daysBetween(day(24, 10, 2026), day(27, 10, 2026)), 3);
+});
+
+test('Across a year', () => {
+  assert.equal(daysBetween(day(30, 12, 2025), day(2, 1, 2026)), 3);
+});
+
+test('The same day is 0, and a later date is negative', () => {
+  assert.equal(daysBetween(day(15, 10, 2026), day(15, 10, 2026)), 0);
+  assert.equal(daysBetween(day(20, 10, 2026), day(15, 10, 2026)), -5);
+});
+
+test('sheetUrl: a tab ID gives #gid', () => {
+  assert.equal(sheetUrl('abc123', 1234567), 'https://docs.google.com/spreadsheets/d/abc123/edit#gid=1234567');
+});
+
+test('sheetUrl: the tab ID 0 gives #gid=0', () => {
+  assert.equal(sheetUrl('abc123', 0), 'https://docs.google.com/spreadsheets/d/abc123/edit#gid=0');
+});
+
+test('sheetUrl: no tab ID gives no #gid', () => {
+  assert.equal(sheetUrl('abc123', undefined), 'https://docs.google.com/spreadsheets/d/abc123/edit');
+});
+
+test('sheetUrl: the spreadsheet ID is encoded', () => {
+  assert.equal(sheetUrl('a/b c', 1), 'https://docs.google.com/spreadsheets/d/a%2Fb%20c/edit#gid=1');
 });

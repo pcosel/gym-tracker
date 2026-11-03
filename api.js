@@ -69,12 +69,18 @@ function spreadsheetUrl() {
 }
 
 // The field mask keeps cell data out of the response: the title proves access,
-// and the tab titles tell whether this year's tab exists.
+// and the tab titles tell whether this year's tab exists. The tab IDs let the
+// title link open on a tab. `tabs` is [{ title, sheetId }].
 export async function probeSpreadsheet() {
-  const data = await apiFetch(`${spreadsheetUrl()}?fields=properties.title,sheets.properties.title`);
+  const data = await apiFetch(
+    `${spreadsheetUrl()}?fields=properties.title,sheets.properties(title,sheetId)`,
+  );
   return {
     title: data.properties.title,
-    tabs: (data.sheets || []).map((sheet) => sheet.properties.title),
+    tabs: (data.sheets || []).map(({ properties }) => ({
+      title: properties.title,
+      sheetId: properties.sheetId,
+    })),
   };
 }
 

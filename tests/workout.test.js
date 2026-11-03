@@ -66,6 +66,37 @@ test('Carry-over row as fallback', () => {
   assert.equal(last.weight.value, 69);
 });
 
+test('Last time in an earlier workout', () => {
+  assert.deepEqual(byName(buildToday(tab(), TODAY), 'Latzug').last.date, { y: 2026, m: 9, d: 12 });
+});
+
+test('Last time before the last workout', () => {
+  const model = buildToday(tab(['13.10.2026', '', '', '75', '10']), TODAY);
+  assert.equal(model.lastWorkoutRow, 6);
+  assert.deepEqual(byName(model, 'Bankdrücken').last.date, { y: 2026, m: 9, d: 12 });
+});
+
+test('Date without leading zeros', () => {
+  const model = buildToday(tab(['5.10.2026', '', '', '75', '10']), TODAY);
+  assert.deepEqual(byName(model, 'Latzug').last.date, { y: 2026, m: 10, d: 5 });
+});
+
+test('Exercise done today: its last time keeps its date', () => {
+  const model = buildToday(tab(['15.10.2026', '', '', '75', '10']), TODAY);
+  assert.deepEqual(byName(model, 'Latzug').last.date, { y: 2026, m: 9, d: 12 });
+});
+
+test('Carry-over row: last time has a year and no date', () => {
+  const last = byName(buildToday(tab(), TODAY), 'Beinpresse').last;
+  assert.equal(last.year, 2025);
+  assert.equal('date' in last, false);
+});
+
+test('A row with only a weight does not give the last time its date', () => {
+  const last = byName(buildToday(tab(), TODAY), 'Bizepsmaschine').last;
+  assert.deepEqual(last.date, { y: 2026, m: 9, d: 1 });
+});
+
 test('Never done', () => {
   const exercise = byName(buildToday(tab(), TODAY), 'Duale Schulterpresse');
   assert.equal(exercise.last, null);

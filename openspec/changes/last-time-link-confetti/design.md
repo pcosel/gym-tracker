@@ -101,13 +101,13 @@ Why this covers every scenario in the spec:
   - **Tile on screen:** when the rectangle lies entirely within the visible area, one burst pops from the tile's centre, outwards in all directions with an upward bias.
   - **Otherwise:** two cannons fire from the left and right edges of the visible area, at about two thirds of its height, upwards and inwards.
   - Either way, the pieces fall back with gravity and drag. In the switching case, `onChange` runs from the blur before `selectItem` replaces the editor or scrolls, so the rectangle is where the user just saw the tile.
-- **Pieces:** about 100 from a tile, or 60 per cannon. They are small rectangles that spin and flutter, and fade out at the end of a life of about 2 to 2.5 seconds.
+- **Pieces:** about 100 from a tile, or 60 per cannon. They are small rectangles that spin and flutter, and fade out at the end of a life of about 0.9 to 1.2 seconds, with the last 0.3 seconds as the fade.
 - **Colours:** `--improved` and `--done`, read from `:root`, so the confetti matches the tiles. There are also three fixed accents: amber, pink and violet.
 - **Frame rate:** movement uses the time between frames, clamped to 1/30 s, so a 120 Hz phone does not run it at double speed. A tab coming back from the background does not jump either.
 - **Sharpness:** the canvas is scaled by `devicePixelRatio`, capped at 2.
 - **Overlaps:** a second call while pieces are still flying adds a new burst to the same canvas and loop. The total is capped at 300 pieces.
 
-The canvas is sized to the window each time a burst starts. A rotation during the 2.5 seconds is not followed.
+The canvas is sized to the window each time a burst starts. A rotation during the 1.2 seconds is not followed.
 
 - *Alternative: the `canvas-confetti` library from a CDN.* Rejected. It is third-party code on a page whose access token any script can read from `sessionStorage`. The README keeps the token out of `localStorage` for exactly that kind of exposure. It would also be the first dependency.
 - *Alternative: DOM elements animated with CSS.* Rejected. Gravity, drag and flutter for over a hundred pieces are simpler on one canvas than as per-element keyframes. They would also add and remove a hundred nodes per burst.
@@ -130,7 +130,7 @@ The canvas is sized to the window each time a burst starts. A rotation during th
 - **[A typo such as 100 instead of 10]** The tile turns green and confetti plays before the user corrects it → accepted. The tile has the same problem today.
 - **[`#gid` in the Google Sheets app]** On a phone, the link may open the Sheets app, which might ignore `#gid` and show the last viewed tab → checked on the phone (task 6.2). Opening the right spreadsheet is still useful.
 - **[First tab with ID 0]** A truthiness check would drop `#gid=0` → covered by a test in task 3.1.
-- **[Slow phones]** 120 pieces for about 2.5 seconds, with the loop stopping afterwards → checked on the phone (task 6.2). The piece count is one constant in `confetti.js`.
+- **[Slow phones]** 120 pieces for about 1 second, with the loop stopping afterwards → checked on the phone (task 6.2). The piece count is one constant in `confetti.js`.
 - **[iOS keyboard and fixed layers]** A fixed canvas covers the layout viewport, part of which lies behind the keyboard. The burst origins come from `visualViewport`, so the pieces start in the visible part → checked on the phone (task 6.2). DevTools cannot show a phone keyboard.
 - **[The page scrolls during a burst from a tile]** `selectItem` scrolls the editor into view right after the burst starts, which can move the tile while the pieces keep their place on screen → accepted. The pieces leave the tile within a fraction of a second.
 - **[Vibration off on the phone]** Android may silence the call when vibration is turned off in its settings → accepted, as the user's own choice.

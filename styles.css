@@ -40,6 +40,8 @@ h3 { font-size: 1.05rem; margin: 0 0 0.75rem; }
 p { margin: 0.25rem 0; }
 .muted, #sheet-line { color: var(--muted); font-size: 0.85rem; }
 
+#sheet-title { color: inherit; text-decoration: underline; }
+
 [hidden] { display: none !important; }
 
 #error { color: var(--danger); }
@@ -134,6 +136,8 @@ input[aria-invalid="true"] { border: 2px solid var(--danger); background: #fdece
 }
 
 /* Editor card */
+.last-time { margin: -0.5rem 0 0.75rem; }
+
 .hint { color: var(--muted); text-align: center; margin: 1rem 0; }
 
 .exercise {
@@ -161,3 +165,6 @@ input[aria-invalid="true"] { border: 2px solid var(--danger); background: #fdece
 .set-number { color: var(--muted); text-align: right; }
 .sets li button { padding: 0; color: var(--muted); background: none; border: none; font-size: 1.25rem; }
 .exercise > button { width: 100%; }
+
+/* Confetti: a layer above the page that never takes a tap */
+canvas.confetti { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1000; }

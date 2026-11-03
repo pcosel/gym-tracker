@@ -7,7 +7,7 @@ A simple web app for tracking gym workouts. Live site: https://pcosel.github.io/
 - **No backend.** The page is static. It signs in with Google Identity Services, which gives the browser a short-lived access token, and calls the Google Sheets REST API directly with the user's own token. There is no server and no client secret.
 - **Drive sharing is the security boundary.** The spreadsheet is private in Google Drive, and only accounts it is shared with can read it. The in-app check only decides what the page renders. The client ID and spreadsheet ID are public, so never switch the sheet's sharing to "Anyone with the link".
 - **The token is kept in memory and in the tab's `sessionStorage`, never in `localStorage`.** The site shares its origin, `https://pcosel.github.io`, with every other project site of the same owner, and so shares their `localStorage`. A token written there could be read by any of them, from any tab. `sessionStorage` belongs to one tab: it survives a reload of that tab, is gone when the tab closes, and another site could read it only by running in that same tab. The entry `gymTracker.session` holds the token, its expiry time and the email, and is removed on sign-out and when the session expires. The only value in `localStorage` is the signed-in email address, under `gymTracker.lastEmail`.
-- **Access check.** After signing in, the app requests the spreadsheet's title and its tab titles (`fields=properties.title,sheets.properties.title`, so no cell data) before showing anything from the sheet.
+- **Access check.** After signing in, the app requests the spreadsheet's title and its tab titles and IDs (`fields=properties.title,sheets.properties(title,sheetId)`, so no cell data) before showing anything from the sheet.
 - **Reading.** The app reads the year's tab in one request, as Google Sheets displays it. That is what makes a reps cell that Sheets stored as a date readable: it comes back as `10, 8, 07`, not as a serial number.
 - **Writing.** The app writes only the cells it changes, as plain text (`valueInputOption=RAW`), in one `values:batchUpdate` per save. Typed input (`USER_ENTERED`) would turn `12, 10, 10` into a date in the "Automatic" columns, and `values.append` would have to guess where the table ends. The target row comes from the read, so it is explicit.
 
@@ -19,7 +19,7 @@ The page always shows the "Gym Tracker" header and exactly one of five screens:
 | Sign-in | There is no session yet, a sign-in was cancelled or failed, or a session expired. |
 | Checking | Google sign-in is loading, a session is being restored, or the access check is running. |
 | Denied ("No access") | The sheet does not exist or is not shared with the signed-in account (HTTP 404 or 403). It offers "Use a different account". |
-| App (workout screen) | The access check succeeded and the year's tab was read. It shows today's date, the sheet's title and today's exercises, and the header shows the account's email next to "Sign out". If the sheet has no tab for the current year, it names the missing tab and offers no editing. |
+| App (workout screen) | The access check succeeded and the year's tab was read. It shows today's date, the sheet's title and today's exercises, and the title is a link that opens the sheet on the year's tab in a new browser tab (without choosing a tab when the year's tab is missing), and the header shows the account's email next to "Sign out". If the sheet has no tab for the current year, it names the missing tab and offers no editing. |
 
 ## Sessions
 
@@ -80,6 +80,7 @@ The screen shows today's date, the number of exercises done today, the save stat
   - The last workout is the nearest dated row above today's row (or the lowest row, if there is none for today yet) in which any exercise has reps. Rows with only a date or only weights are skipped, and an exercise counts as done there when its reps cell holds at least one set, readable or not.
   - It differs from "last time", which is per exercise and reaches back as far as needed: an exercise skipped in the last workout has no border, though it still has a last time for the prefill and the green rule.
   - At the start of a year there is no border until a workout row with reps exists, because the carry-over row holds last year's final values and is not one workout.
+- Every time a tile turns green from your input, confetti plays and the phone vibrates once, briefly. The confetti bursts from that tile when it is entirely on screen, and from both sides of the visible screen otherwise. Neither happens on load or on a tile that is already green. Reduced motion skips the confetti but not the vibration, and iPhones do not vibrate.
 - The colour follows the values on screen: it changes when you leave a field or delete a set, and it keeps its state while a field is marked invalid.
 - The counter at the top counts the blue and green tiles. A border does not count.
 
@@ -89,6 +90,7 @@ The screen shows today's date, the number of exercises done today, the save stat
 - "Last time" is the nearest workout row above today's row (or the last row, if there is no row for today) whose reps cell holds at least one readable set. If none qualifies, it is the carry-over row, provided that holds a readable set.
 - The exercise weight and each set's own weight are copied from last time as values. Last time's reps appear only as placeholders. Prefilled values alone are never saved.
 - Today's saved values come first, and last time fills the gaps.
+- The editor shows the date of last time in grey under the exercise's name, with how many days ago it was in brackets, such as "Last time: 12.10.2026 (3 days ago)". For the carry-over row it shows only the year, as "Last time: 2025", with no count. An exercise never done shows nothing.
 
 ### Saving
 
@@ -155,8 +157,9 @@ Then open http://localhost:8000.
 | `api.js` | Calls Google APIs with the access token, turns failures into typed errors, checks access to the spreadsheet, and reads and writes the year's tab. |
 | `app.js` | Starts the app, switches between the screens and loads today's workout. |
 | `today.js` | The workout screen: rendering, input handling, the save queue and the status line. |
+| `confetti.js` | The confetti animation: one canvas above the page that removes itself when the pieces are gone. |
 | `workout.js` | Pure: today's exercises, prefill and the cells an edit writes. |
-| `sheet-format.js` | Pure: the sheet's header, dates, weight and reps notation, and A1 ranges. |
+| `sheet-format.js` | Pure: the sheet's header, dates, weight and reps notation, A1 ranges, day counts and the link to the sheet. |
 | `package.json` | Marks the files as ES modules for Node and defines `npm test`. |
 | `tests/` | The tests for `sheet-format.js` and `workout.js`. |
 | `.gitignore` | Keeps `.claude/worktrees` out of commits, and so out of what Pages publishes. |

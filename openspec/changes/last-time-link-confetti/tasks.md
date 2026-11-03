@@ -8,11 +8,11 @@ Groups 1–5 are implemented in the git worktree above, on branch `worktree-last
 
 ## 1. Branch up to date
 
-- [ ] 1.1 In the worktree, check that the branch contains `main`'s head (`git merge-base --is-ancestor main HEAD`). If `main` has moved on, rebase the branch onto `main`. Verify that `npm test` passes before any change.
+- [x] 1.1 In the worktree, check that the branch contains `main`'s head (`git merge-base --is-ancestor main HEAD`). If `main` has moved on, rebase the branch onto `main`. Verify that `npm test` passes before any change.
 
 ## 2. Date of the last time in the editor
 
-- [ ] 2.1 In `workout.js`, have `buildToday` give `last` a `date` for a workout row and a `year` for the carry-over row, as in design.md ("The last time carries its date"). Update the comment above `buildToday` to describe both fields. Keep the existing tests unchanged. Add tests to `tests/workout.test.js`, using the existing `tab()` rows unless stated otherwise:
+- [x] 2.1 In `workout.js`, have `buildToday` give `last` a `date` for a workout row and a `year` for the carry-over row, as in design.md ("The last time carries its date"). Update the comment above `buildToday` to describe both fields. Keep the existing tests unchanged. Add tests to `tests/workout.test.js`, using the existing `tab()` rows unless stated otherwise:
   - "Last time in an earlier workout": Latzug's `last.date` is `{ y: 2026, m: 9, d: 12 }`, from row 5;
   - "Last time before the last workout": with `['13.10.2026', '', '', '75', '10']` added, Bankdrücken's `last.date` is still 12.09.2026, while the last workout is row 6;
   - "Date without leading zeros": with `['5.10.2026', '', '', '75', '10']` added, Latzug's `last.date` is `{ y: 2026, m: 10, d: 5 }`;
@@ -21,7 +21,7 @@ Groups 1–5 are implemented in the git worktree above, on branch `worktree-last
   - Bizepsmaschine's `last.date` is 01.09.2026, from row 3, because row 5 holds only a weight.
 
   "Never done" is covered by the existing test, where `last` is `null`. Verify that `npm test` passes.
-- [ ] 2.2 In `sheet-format.js`, add `daysBetween(from, to)` as in design.md ("The day count is a pure date function"). Add tests to `tests/sheet-format.test.js`:
+- [x] 2.2 In `sheet-format.js`, add `daysBetween(from, to)` as in design.md ("The day count is a pure date function"). Add tests to `tests/sheet-format.test.js`:
   - "A few days ago": 12.10.2026 to 15.10.2026 is 3;
   - "One day ago": 14.10.2026 to 15.10.2026 is 1;
   - "Across a month": 12.09.2026 to 15.10.2026 is 33;
@@ -30,7 +30,7 @@ Groups 1–5 are implemented in the git worktree above, on branch `worktree-last
   - the same day is 0, and a later date, 20.10.2026 to 15.10.2026, is -5.
 
   Verify that `npm test` passes.
-- [ ] 2.3 In `today.js`, have `buildExercise` add the last-time line, with its day count, under the heading in both editor modes. Add the `.last-time` rule to `styles.css`. Both follow design.md ("The line sits under the heading, in both editor modes" and "The day count is a pure date function"). Verify on `localhost`:
+- [x] 2.3 In `today.js`, have `buildExercise` add the last-time line, with its day count, under the heading in both editor modes. Add the `.last-time` rule to `styles.css`. Both follow design.md ("The line sits under the heading, in both editor modes" and "The day count is a pure date function"). Verify on `localhost`:
   - "Last time in an earlier workout": opening an exercise shows "Last time: dd.mm.yyyy (N days ago)" in grey under its name. The date matches the row its placeholders come from in the development sheet;
   - "A few days ago": for two exercises with different dates, each count matches the calendar up to the date at the top of the screen;
   - "One day ago": set the date of an exercise's last-time row in the development sheet to yesterday and reload. The line ends with "(1 day ago)". Then restore the date;
@@ -40,18 +40,18 @@ Groups 1–5 are implemented in the git worktree above, on branch `worktree-last
   - "Exercise done today": after entering a set, and after "+ Set" and "×", the line is still there with the same date and count;
   - "Unreadable cells today": type "?, 9, 7" into a reps cell of today's row in the development sheet and reload. That exercise's text-field editor shows the line;
   - the console shows no errors.
-- [ ] 2.4 Update `README.md` ("Prefill"): the editor shows the date of the last time in grey, with how many days ago it was in brackets. For the carry-over row, it shows only the year, with no count. An exercise never done shows nothing. Verify that the README matches what 2.3 showed.
+- [x] 2.4 Update `README.md` ("Prefill"): the editor shows the date of the last time in grey, with how many days ago it was in brackets. For the carry-over row, it shows only the year, with no count. An exercise never done shows nothing. Verify that the README matches what 2.3 showed.
 
 ## 3. The sheet's title links to the sheet
 
-- [ ] 3.1 In `sheet-format.js`, add `sheetUrl(spreadsheetId, sheetId)` as in design.md ("The link is built by a pure function"). Add tests to `tests/sheet-format.test.js`:
+- [x] 3.1 In `sheet-format.js`, add `sheetUrl(spreadsheetId, sheetId)` as in design.md ("The link is built by a pure function"). Add tests to `tests/sheet-format.test.js`:
   - an ID and the tab ID 1234567 give `https://docs.google.com/spreadsheets/d/<ID>/edit#gid=1234567`;
   - the tab ID 0 gives `#gid=0`;
   - no tab ID (`undefined`) gives the URL without `#gid`;
   - a spreadsheet ID with a character that needs encoding comes out encoded.
 
   Verify that `npm test` passes.
-- [ ] 3.2 Make the probe return `tabs` as `[{ title, sheetId }]` in `api.js`, with the new field mask. In `index.html`, turn `#sheet-title` into the link. In `app.js`, find the year's tab and set the link's text and `href`. Add the link's style to `styles.css`. All of this follows design.md ("The probe also asks for the tab IDs" and "A link that opens a new browser tab"). Verify on `localhost`:
+- [x] 3.2 Make the probe return `tabs` as `[{ title, sheetId }]` in `api.js`, with the new field mask. In `index.html`, turn `#sheet-title` into the link. In `app.js`, find the year's tab and set the link's text and `href`. Add the link's style to `styles.css`. All of this follows design.md ("The probe also asks for the tab IDs" and "A link that opens a new browser tab"). Verify on `localhost`:
   - "Owner signs in": the title shows as before, underlined, in the muted colour;
   - "Opening the sheet": selecting the title opens a new browser tab on the development sheet's "2026" tab. Its URL holds the development spreadsheet ID and `#gid=`, and the workout screen stays open in its tab with any entered value;
   - "Local run opens the development sheet": the link's `href` never holds the production spreadsheet ID;
@@ -59,7 +59,7 @@ Groups 1–5 are implemented in the git worktree above, on branch `worktree-last
   - "Year tab is missing": rename the development sheet's "2026" tab, reload, and check that the missing-tab message shows and the link has no `#gid`. Then rename the tab back;
   - keyboard focus (Tab) on the link shows the focus outline;
   - the console shows no errors.
-- [ ] 3.3 Update `README.md`:
+- [x] 3.3 Update `README.md`:
   - "Access check": the new field mask, with `sheetId`;
   - the App row of the screens table: the title links to the year's tab, in a new browser tab.
 
@@ -67,14 +67,14 @@ Groups 1–5 are implemented in the git worktree above, on branch `worktree-last
 
 ## 4. Confetti
 
-- [ ] 4.1 Add `confetti.js` with `playConfetti(tile)`, and the `.confetti` rule to `styles.css`, as in design.md ("A self-contained canvas animation in `confetti.js`"). Verify in the DevTools console on `localhost`, with `const { playConfetti } = await import('./confetti.js')` and `const tile = document.querySelector('#tiles button')`:
-  - "Tile on screen": with the first tile entirely on screen, `playConfetti(tile)` pops one burst from its centre. The pieces fall and fade out within about 2.5 seconds;
+- [x] 4.1 Add `confetti.js` with `playConfetti(tile)`, and the `.confetti` rule to `styles.css`, as in design.md ("A self-contained canvas animation in `confetti.js`"). Verify in the DevTools console on `localhost`, with `const { playConfetti } = await import('./confetti.js')` and `const tile = document.querySelector('#tiles button')`:
+  - "Tile on screen": with the first tile entirely on screen, `playConfetti(tile)` pops one burst from its centre. The pieces fall and fade out within about 1.2 seconds;
   - "Tile out of view" and "Tile partly on screen": scrolled so that the first tile is entirely, then partly, out of view, `playConfetti(tile)` bursts from both sides;
   - after that, the `canvas.confetti` element is gone from the Elements panel;
   - three quick calls add up on one canvas, without a second canvas;
   - with the Rendering option "prefers-reduced-motion: reduce", a call shows nothing and adds no canvas;
   - in device mode at 360px and 430px width, the burst fits the screen and the pieces look sharp.
-- [ ] 4.2 In `today.js`, have `onChange` call `playConfetti(item.tile)` when the tile turns green, as in design.md ("Confetti starts in `onChange`, when the tile turns green"). Verify on `localhost`, with an exercise whose last time has readable reps:
+- [x] 4.2 In `today.js`, have `onChange` call `playConfetti(item.tile)` when the tile turns green, as in design.md ("Confetti starts in `onChange`, when the tile turns green"). Verify on `localhost`, with an exercise whose last time has readable reps:
   - "Turning green": enter sets until the tile turns green. Confetti plays when you leave the field, together with the colour change;
   - "From not done straight to improved": on an exercise not done today, a first entry that already beats last time plays confetti;
   - "Already improved": another set on a green tile plays no confetti;
@@ -87,21 +87,21 @@ Groups 1–5 are implemented in the git worktree above, on branch `worktree-last
   - "Taps during the animation": while confetti plays, tap a set field. It gets the focus;
   - "Reduced motion": with "prefers-reduced-motion: reduce", turning a tile green changes its colour and plays no confetti;
   - the console shows no errors.
-- [ ] 4.3 In `today.js`, add the `VIBRATION` constant and have `onChange` call `navigator.vibrate(VIBRATION)` next to `playConfetti()`, as in design.md ("The vibration is one call next to the confetti"). Verify on `localhost` in Chrome, with a logpoint in DevTools' Sources panel on the `navigator.vibrate` line of `today.js`, so that each call logs and the logpoint survives a reload:
+- [x] 4.3 In `today.js`, add the `VIBRATION` constant and have `onChange` call `navigator.vibrate(VIBRATION)` next to `playConfetti()`, as in design.md ("The vibration is one call next to the confetti"). Verify on `localhost` in Chrome, with a logpoint in DevTools' Sources panel on the `navigator.vibrate` line of `today.js`, so that each call logs and the logpoint survives a reload:
   - "Turning green on an Android phone": turning a tile green logs once, together with the confetti;
   - "No vibration without a change to improved": another set on a green tile logs nothing, and neither does a reload with a green tile;
   - "Reduced motion": with "prefers-reduced-motion: reduce", turning a tile green logs once and plays no confetti;
   - "Browser without vibration": after `delete Navigator.prototype.vibrate` in the console, turning a tile green logs nothing, confetti plays, and the console shows no errors. Reload to restore it.
-- [ ] 4.4 Update `README.md`:
+- [x] 4.4 Update `README.md`:
   - "Tiles": every time a tile turns green from your input, confetti plays and the phone vibrates once, briefly. The confetti bursts from that tile when it is on screen, and from both sides otherwise. Neither happens on load or on a tile that is already green. Reduced motion skips the confetti but not the vibration, and iPhones do not vibrate;
   - the Files table gains `confetti.js`.
 
   Verify that the README matches what 4.2 and 4.3 showed.
-- [ ] 4.5 (Manual, user) On `localhost`, in device mode at 360px width, turn a tile green and confirm that the confetti looks good. If the amount, the speed or the colours are not right, change the constants in `confetti.js`, and update design.md if they differ from it, before group 5.
+- [x] 4.5 (Manual, user) On `localhost`, in device mode at 360px width, turn a tile green and confirm that the confetti looks good. If the amount, the speed or the colours are not right, change the constants in `confetti.js`, and update design.md if they differ from it, before group 5.
 
 ## 5. Integration and merge
 
-- [ ] 5.1 Run `npm test`. On `localhost`, do one complete pass on a day without a row for today in the development sheet:
+- [x] 5.1 Run `npm test`. On `localhost`, do one complete pass on a day without a row for today in the development sheet:
   1. Open an exercise and note its last-time date and day count.
   2. Log sets until its tile turns green.
   3. Open the sheet through the title link and check the new row there.

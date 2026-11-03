@@ -43,6 +43,14 @@ export function dateOf(jsDate) {
   return { y: jsDate.getFullYear(), m: jsDate.getMonth() + 1, d: jsDate.getDate() };
 }
 
+// Calendar days from `from` to `to`, two { y, m, d } dates. Counted in UTC, so
+// a clock change cannot make a day 23 or 25 hours long. Negative when `to` is
+// before `from`.
+export function daysBetween(from, to) {
+  const utc = ({ y, m, d }) => Date.UTC(y, m - 1, d);
+  return (utc(to) - utc(from)) / 86400000;
+}
+
 // Row 2 is the carry-over row when its column A holds a four-digit year.
 export function hasCarryOverRow(rows) {
   const cell = rows[1] && rows[1][0];
@@ -109,4 +117,11 @@ export function rangeFor(tab, row, fromCol, toCol = fromCol) {
   const quoted = quoteTab(tab);
   const from = `${columnLetter(fromCol)}${row}`;
   return toCol === fromCol ? `${quoted}!${from}` : `${quoted}!${from}:${columnLetter(toCol)}${row}`;
+}
+
+// The link to a spreadsheet, on the tab `sheetId` when that is a number. The
+// first tab usually has the ID 0, so a number is checked for, not truthiness.
+export function sheetUrl(spreadsheetId, sheetId) {
+  const base = `https://docs.google.com/spreadsheets/d/${encodeURIComponent(spreadsheetId)}/edit`;
+  return typeof sheetId === 'number' ? `${base}#gid=${sheetId}` : base;
 }

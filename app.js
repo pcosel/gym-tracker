@@ -1,7 +1,7 @@
-import { ENVIRONMENT, missingConfigKeys } from './config.js';
+import { ENVIRONMENT, CONFIG, missingConfigKeys } from './config.js';
 import * as auth from './auth.js';
 import { probeSpreadsheet, readTab } from './api.js';
-import { dateOf, formatDate } from './sheet-format.js';
+import { dateOf, formatDate, sheetUrl } from './sheet-format.js';
 import { initToday, showMissingTab, startWorkout } from './today.js';
 
 const SCREENS = ['config', 'signin', 'checking', 'denied', 'app'];
@@ -70,9 +70,11 @@ async function enterApp() {
     const today = dateOf(new Date());
     const tab = String(today.y);
     $('account-email').textContent = auth.getEmail() || '';
+    const yearTab = tabs.find((t) => t.title === tab);
     $('sheet-title').textContent = title;
+    $('sheet-title').href = sheetUrl(CONFIG.SPREADSHEET_ID, yearTab && yearTab.sheetId);
     $('today-date').textContent = formatDate(today);
-    if (!tabs.includes(tab)) {
+    if (!yearTab) {
       showMissingTab(tab);
       showScreen('app');
       return;

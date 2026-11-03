@@ -33,7 +33,10 @@ export function splitAssisted(name) {
 // counts. Each exercise is { name, weightCol, repsCol, assisted, today, last,
 // doneLastWorkout }. `today` is null when today's row has neither a weight nor
 // reps for it. `doneLastWorkout` tells whether its reps cell in lastWorkoutRow
-// holds any set, readable or not.
+// holds any set, readable or not. `last` is the entry of the exercise's last
+// time (see `read`), plus `date` ({ y, m, d } from column A) for a workout row,
+// or plus `carryOver: true` and `year` (the number in A2) for the carry-over
+// row.
 export function buildToday(rows, today) {
   const cell = (row, col) => String((rows[row - 1] && rows[row - 1][col]) ?? '');
   const carryOver = hasCarryOverRow(rows);
@@ -82,11 +85,11 @@ export function buildToday(rows, today) {
     for (let row = start; row >= firstWorkoutRow && last === null; row--) {
       if (!parseDate(cell(row, 0))) continue;
       const entry = read(row, weightCol, repsCol);
-      if (hasReadableSet(entry)) last = entry;
+      if (hasReadableSet(entry)) last = { ...entry, date: parseDate(cell(row, 0)) };
     }
     if (last === null && carryOver) {
       const entry = read(2, weightCol, repsCol);
-      if (hasReadableSet(entry)) last = { ...entry, carryOver: true };
+      if (hasReadableSet(entry)) last = { ...entry, carryOver: true, year: Number(cell(2, 0).trim()) };
     }
 
     return {

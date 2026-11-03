@@ -7,6 +7,11 @@ import {
   buildToday, initialState, cellsFor, writesFor, removeSet, tileLabels, progressOf,
 } from './workout.js';
 import { iconFor } from './icons.js';
+import { formatDate, daysBetween } from './sheet-format.js';
+import { playConfetti } from './confetti.js';
+
+// One short buzz, in milliseconds, when a tile turns green.
+const VIBRATION = 100;
 
 const $ = (id) => document.getElementById(id);
 
@@ -98,6 +103,24 @@ function labelled(text, input) {
   return label;
 }
 
+// "Last time: 12.10.2026 (3 days ago)", or "Last time: 2025" for the carry-over
+// row. The count is up to the date the screen shows, and is left out for a date
+// that is not before it.
+function lastTimeText(last) {
+  if (last.carryOver) return `Last time: ${last.year}`;
+  let text = `Last time: ${formatDate(last.date)}`;
+  const days = daysBetween(last.date, today);
+  if (days >= 1) text += ` (${days} ${days === 1 ? 'day' : 'days'} ago)`;
+  return text;
+}
+
+function buildLastTime(last) {
+  const line = document.createElement('p');
+  line.className = 'muted last-time';
+  line.textContent = lastTimeText(last);
+  return line;
+}
+
 function buildExercise(item) {
   const { state, exercise } = item;
   const section = document.createElement('section');
@@ -105,6 +128,7 @@ function buildExercise(item) {
   const heading = document.createElement('h3');
   heading.textContent = exercise.name;
   section.append(heading);
+  if (exercise.last) section.append(buildLastTime(exercise.last));
 
   if (state.mode === 'text') {
     const weight = textInput(state.weightText, { inputmode: 'text', label: `${exercise.name} weight` });
@@ -334,9 +358,14 @@ function onChange(item) {
   // invalid there are none, and the tile keeps its state.
   const cells = cellsFor(item.state);
   if (cells.ok) {
+    const before = item.progress;
     item.progress = progressOf(cells, item.exercise.last, item.exercise.assisted);
     renderTile(item);
     renderCounter();
+    if (before !== 'improved' && item.progress === 'improved') {
+      playConfetti(item.tile);
+      if (navigator.vibrate) navigator.vibrate(VIBRATION);
+    }
   }
   dirty.add(keyOf(item));
   runQueue();
