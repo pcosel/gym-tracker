@@ -9,6 +9,8 @@ import {
 import { iconFor } from './icons.js';
 import { formatDate, daysBetween } from './sheet-format.js';
 import { playConfetti } from './confetti.js';
+import { buildIcon } from './svg.js';
+import { withToday } from './stats.js';
 
 // One short buzz, in milliseconds, when a tile turns green.
 const VIBRATION = 100;
@@ -16,9 +18,12 @@ const VIBRATION = 100;
 const $ = (id) => document.getElementById(id);
 
 // One entry per exercise of the header row, in header order:
-// { exercise, state, icon, label, progress, tile, element }. A tile shows its
-// icon, or its label when it has none.
+// { exercise, state, icon, label, progress, cells, tile, element }. A tile
+// shows its icon, or its label when it has none. `cells` are the two cells the
+// tile counts, { weightText, repsText }: today's from the sheet, then updated
+// together with `progress`.
 let items = [];
+let loadedRows = [];
 let selected = null;
 let tab = '';
 let today = null;
@@ -48,6 +53,7 @@ export function showMissingTab(title) {
 export function startWorkout({ tab: tabTitle, rows, today: date }) {
   tab = tabTitle;
   today = date;
+  loadedRows = rows;
   const model = buildToday(rows, date);
   todayRow = model.todayRow;
   const labels = tileLabels(
@@ -64,6 +70,9 @@ export function startWorkout({ tab: tabTitle, rows, today: date }) {
       exercise.last,
       exercise.assisted,
     ),
+    cells: exercise.today
+      ? { weightText: exercise.today.weightText, repsText: exercise.today.repsText }
+      : { weightText: '', repsText: '' },
     tile: null,
     element: null,
   }));
@@ -80,6 +89,19 @@ export function startWorkout({ tab: tabTitle, rows, today: date }) {
   showHint();
   renderCounter();
   renderStatus();
+}
+
+// The loaded rows with today's row as the tiles count it, saved or not.
+export function currentRows() {
+  return withToday(
+    loadedRows,
+    today,
+    items.map(({ exercise, cells }) => ({
+      weightCol: exercise.weightCol,
+      repsCol: exercise.repsCol,
+      ...cells,
+    })),
+  );
 }
 
 // ---- Rendering ----
@@ -125,9 +147,16 @@ function buildExercise(item) {
   const { state, exercise } = item;
   const section = document.createElement('section');
   section.className = 'exercise';
+  const head = document.createElement('div');
+  head.className = 'exercise-head';
   const heading = document.createElement('h3');
   heading.textContent = exercise.name;
-  section.append(heading);
+  const link = document.createElement('a');
+  link.href = `#history/${encodeURIComponent(exercise.name)}`;
+  link.textContent = 'History';
+  link.setAttribute('aria-label', `History of ${exercise.name}`);
+  head.append(heading, link);
+  section.append(head);
   if (exercise.last) section.append(buildLastTime(exercise.last));
 
   if (state.mode === 'text') {
@@ -225,33 +254,6 @@ const STATE_TEXT = {
   done: 'done today',
   improved: 'improved on last time',
 };
-
-const SVG_NS = 'http://www.w3.org/2000/svg';
-
-function svgElement(name, attributes) {
-  const element = document.createElementNS(SVG_NS, name);
-  for (const [key, value] of Object.entries(attributes)) element.setAttribute(key, String(value));
-  return element;
-}
-
-function buildIcon({ d, dots = [], rings = [] }) {
-  const svg = svgElement('svg', {
-    viewBox: '0 0 24 24',
-    fill: 'none',
-    stroke: 'currentColor',
-    'stroke-width': 2,
-    'stroke-linecap': 'round',
-    'stroke-linejoin': 'round',
-    'aria-hidden': 'true',
-    focusable: 'false',
-  });
-  svg.append(svgElement('path', { d }));
-  for (const [cx, cy, r] of dots) {
-    svg.append(svgElement('circle', { cx, cy, r, fill: 'currentColor', stroke: 'none' }));
-  }
-  for (const [cx, cy, r] of rings) svg.append(svgElement('circle', { cx, cy, r }));
-  return svg;
-}
 
 function buildTile(item) {
   const tile = document.createElement('button');
@@ -359,6 +361,7 @@ function onChange(item) {
   const cells = cellsFor(item.state);
   if (cells.ok) {
     const before = item.progress;
+    item.cells = { weightText: cells.weightText, repsText: cells.repsText };
     item.progress = progressOf(cells, item.exercise.last, item.exercise.assisted);
     renderTile(item);
     renderCounter();

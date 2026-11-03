@@ -46,14 +46,21 @@
     <p id="sheet-line" class="muted">Sheet: <a id="sheet-title" target="_blank" rel="noopener"></a></p>
     <p id="tab-missing" hidden></p>
     <div id="workout" hidden>
+      <nav id="page-switch" aria-label="Page">
+        <a href="#" id="switch-today" aria-current="page">Today</a>
+        <a href="#history" id="switch-history">History</a>
+      </nav>
       <div id="summary">
         <p id="done-count"></p>
         <p id="save-status" role="status"></p>
         <button type="button" id="save-retry" hidden>Retry</button>
         <button type="button" id="save-signin" hidden>Sign in to save</button>
       </div>
-      <div id="tiles" role="group" aria-label="Exercises"></div>
-      <div id="editor"></div>
+      <div id="today-view">
+        <div id="tiles" role="group" aria-label="Exercises"></div>
+        <div id="editor"></div>
+      </div>
+      <div id="history" hidden></div>
     </div>
   </section>
 

@@ -102,9 +102,24 @@ The screen shows today's date, the number of exercises done today, the save stat
 - An exercise whose cell for today is unreadable shows two plain text fields, and saving writes the entered text unchanged.
 - If the session expired and cannot be renewed silently, the screen stays as it is, says so, and offers "Sign in to save". One tap signs in and saves the values on screen.
 
+## History
+
+When the year's tab exists, a "Today" / "History" switch sits at the top of the workout screen. The save status stays visible on both pages. The count of exercises done today is shown on Today only.
+
+- **Navigation.** Opening History, and opening an exercise's detail, are browser-history steps (`#history`, `#history/<name>`), so the phone's back button goes back one step. A reload always starts on Today. Switching to History and back keeps the open exercise, the values on screen and any save still to be done. A focused field is saved first, as when you leave it.
+- **From the editor.** Each exercise's editor has a "History" link to that exercise's detail, also for text fields with unreadable cells. The detail's chevron link or the browser's back button returns to the editor as it was.
+- **Year so far.** The number of workouts, sets and reps, the most-done exercise (all of them on a tie, in alphabetical order), and the biggest gain in estimated 1RM in whole percent. The baseline is the carry-over row, or the exercise's first session this year when that row gives no value for it. Assisted exercises never count. Without workouts, it says so.
+- **Exercise list.** Every exercise with its icon and when it was last done ("today", "yesterday", "N days ago", "not done this year"), most recent first. The arrow button next to the heading reverses the order, with the exercises not done this year first. Ties are alphabetical in both orders, ignoring case and with umlauts sorted as their base letter. The order stays until the page reloads.
+- **Detail.** The window is "30 days", "90 days", "This year" or a typed number of days (a whole number, at least 1; other input is marked and ignored). It stays for other exercises until the page reloads. The detail shows how often the exercise was done in the window, when it was last done, the average reps and the average weight per session, and a graph.
+- **Coverage note.** The history never reads another tab. When a window starts before 1 January, the detail says how many of its days are covered and that earlier workouts are in the previous year's tab.
+- **Averages are per session.** Each session's reps are added up, and its weight is averaged over all its reps, each at its set's weight. The detail shows the mean of these over the sessions. Sessions with an unreadable cell count for how often, but are left out of the averages, and the detail says how many. For an assisted exercise the weight is called assistance.
+- **Graph.** One point per session, with its estimated 1RM by Epley (weight × (1 + reps / 30), best set of the session). It shows a trend, not a true maximum: Epley is too high for many reps, consistently so. Sets at 0 kg or 0 reps and unreadable sessions give no point. For an assisted exercise it shows the lightest assistance per session and says "lower is better". With fewer than two points, it says there is not enough data.
+- **Today counts.** Today's values count as the tiles count them, including sets not saved yet.
+- **No requests.** The history uses the year's tab as read when the screen loaded. It sends no request and writes nothing. Changes made in Google Sheets afterwards appear after a reload.
+
 ## Tests
 
-`npm test` runs the tests with Node's built-in test runner (Node 20 or later). There is nothing to install. The tests cover the sheet notation and the prefill rules, and their data is made up.
+`npm test` runs the tests with Node's built-in test runner (Node 20 or later). There is nothing to install. The tests cover the sheet notation, the prefill rules and the history statistics (`stats.js`), and their data is made up.
 
 ## Google Cloud setup
 
@@ -150,17 +165,20 @@ Then open http://localhost:8000.
 
 | File | Responsibility |
 |---|---|
-| `index.html` | The header and the five screens, all hidden by default. Loads `app.js` and `styles.css`. |
+| `index.html` | The header and the five screens, all hidden by default, and the workout screen's Today / History switch. Loads `app.js` and `styles.css`. |
 | `styles.css` | A phone layout for the workout screen. |
 | `config.js` | The production and development configurations, the one active for this host, and a check for blank entries. |
 | `auth.js` | Google sign-in: loads Google Identity Services, gets, renews and revokes the access token, keeps the token for the tab, and remembers the signed-in email. |
 | `api.js` | Calls Google APIs with the access token, turns failures into typed errors, checks access to the spreadsheet, and reads and writes the year's tab. |
-| `app.js` | Starts the app, switches between the screens and loads today's workout. |
+| `app.js` | Starts the app, switches between the screens, loads today's workout and switches between Today and History through the URL hash. |
 | `today.js` | The workout screen: rendering, input handling, the save queue and the status line. |
 | `confetti.js` | The confetti animation: one canvas above the page that removes itself when the pieces are gone. |
+| `history.js` | The History page: year so far, exercise list, exercise detail and the SVG graph. |
+| `stats.js` | Pure: sessions, windows, averages, estimated 1RM, exercise order and the year so far. |
+| `svg.js` | The SVG element and icon helpers shared by the Today and History pages. |
 | `workout.js` | Pure: today's exercises, prefill and the cells an edit writes. |
 | `sheet-format.js` | Pure: the sheet's header, dates, weight and reps notation, A1 ranges, day counts and the link to the sheet. |
 | `package.json` | Marks the files as ES modules for Node and defines `npm test`. |
-| `tests/` | The tests for `sheet-format.js` and `workout.js`. |
+| `tests/` | The tests for `sheet-format.js`, `workout.js`, `icons.js` and `stats.js`. |
 | `.gitignore` | Keeps `.claude/worktrees` out of commits, and so out of what Pages publishes. |
 | `.nojekyll` | Tells GitHub Pages to serve the files as they are. |

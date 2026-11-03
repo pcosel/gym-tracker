@@ -2,7 +2,8 @@ import { ENVIRONMENT, CONFIG, missingConfigKeys } from './config.js';
 import * as auth from './auth.js';
 import { probeSpreadsheet, readTab } from './api.js';
 import { dateOf, formatDate, sheetUrl } from './sheet-format.js';
-import { initToday, showMissingTab, startWorkout } from './today.js';
+import { initToday, showMissingTab, startWorkout, currentRows } from './today.js';
+import { showHistory } from './history.js';
 
 const SCREENS = ['config', 'signin', 'checking', 'denied', 'app'];
 const SCREENS_WITH_ACCOUNT = ['app', 'denied'];
@@ -62,6 +63,39 @@ function handleAccessError(error) {
   }
 }
 
+// The workout screen's page follows the URL hash: none is Today, `#history` is
+// the History page, and `#history/<name>` is one exercise's detail. Every
+// switch is a browser-history entry, so the back button walks back through them.
+let workout = null; // { today } once the workout screen is shown
+
+function showPage() {
+  if (!workout) return;
+  const hash = location.hash;
+  let name;
+  const onHistory = hash === '#history' || hash.startsWith('#history/');
+  if (hash.startsWith('#history/')) {
+    try {
+      name = decodeURIComponent(hash.slice('#history/'.length));
+    } catch {
+      name = undefined; // a malformed % sequence shows the list
+    }
+  }
+  if (onHistory) {
+    // Leaving a focused field fires its change first, so the edit is counted
+    // before the rows are read.
+    const focused = document.activeElement;
+    if (focused && focused.tagName === 'INPUT' && $('editor').contains(focused)) focused.blur();
+    showHistory({ rows: currentRows(), today: workout.today, name });
+  }
+  $('today-view').hidden = onHistory;
+  $('done-count').hidden = onHistory;
+  $('history').hidden = !onHistory;
+  for (const [id, current] of [['switch-today', !onHistory], ['switch-history', onHistory]]) {
+    if (current) $(id).setAttribute('aria-current', 'page');
+    else $(id).removeAttribute('aria-current');
+  }
+}
+
 async function enterApp() {
   clearError();
   showChecking('Checking access…');
@@ -75,6 +109,7 @@ async function enterApp() {
     $('sheet-title').href = sheetUrl(CONFIG.SPREADSHEET_ID, yearTab && yearTab.sheetId);
     $('today-date').textContent = formatDate(today);
     if (!yearTab) {
+      workout = null;
       showMissingTab(tab);
       showScreen('app');
       return;
@@ -82,6 +117,10 @@ async function enterApp() {
     showChecking('Loading today’s workout…');
     const rows = await readTab(tab);
     startWorkout({ tab, rows, today });
+    // A reload always starts on Today.
+    if (location.hash) history.replaceState(null, '', location.pathname + location.search);
+    workout = { today };
+    showPage();
     showScreen('app');
   } catch (error) {
     handleAccessError(error);
@@ -104,6 +143,7 @@ async function onSignOut(event) {
   button.disabled = true;
   try {
     await auth.signOut();
+    workout = null;
     clearError();
     $('account-email').textContent = '';
     showScreen('signin');
@@ -127,6 +167,7 @@ async function boot() {
   }
 
   initToday();
+  window.addEventListener('hashchange', showPage);
   $('sign-in').addEventListener('click', onSignIn);
   $('sign-out').addEventListener('click', onSignOut);
   $('use-different-account').addEventListener('click', onSignOut);

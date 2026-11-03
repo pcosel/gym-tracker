@@ -35,6 +35,17 @@ export function formatDate({ y, m, d }) {
   return `${String(d).padStart(2, '0')}.${String(m).padStart(2, '0')}.${String(y).padStart(4, '0')}`;
 }
 
+// A date as a whole number of days since 1970-01-01, for day arithmetic.
+// UTC never shifts across daylight saving time.
+export function dayNumber({ y, m, d }) {
+  return Date.UTC(y, m - 1, d) / 86400000;
+}
+
+export function fromDayNumber(n) {
+  const date = new Date(n * 86400000);
+  return { y: date.getUTCFullYear(), m: date.getUTCMonth() + 1, d: date.getUTCDate() };
+}
+
 export function sameDate(a, b) {
   return Boolean(a && b) && a.y === b.y && a.m === b.m && a.d === b.d;
 }

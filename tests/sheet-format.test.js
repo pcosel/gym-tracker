@@ -4,6 +4,8 @@ import {
   parseHeader,
   parseDate,
   formatDate,
+  dayNumber,
+  fromDayNumber,
   hasCarryOverRow,
   parseWeight,
   parseReps,
@@ -242,4 +244,20 @@ test('sheetUrl: no tab ID gives no #gid', () => {
 
 test('sheetUrl: the spreadsheet ID is encoded', () => {
   assert.equal(sheetUrl('a/b c', 1), 'https://docs.google.com/spreadsheets/d/a%2Fb%20c/edit#gid=1');
+});
+
+test('Day numbers: differences in days', () => {
+  const diff = (a, b) => dayNumber(a) - dayNumber(b);
+  assert.equal(diff({ y: 2026, m: 10, d: 15 }, { y: 2026, m: 9, d: 12 }), 33);
+  assert.equal(diff({ y: 2027, m: 1, d: 1 }, { y: 2026, m: 12, d: 31 }), 1);
+});
+
+test('Day numbers: the change to summer time is still 1 day', () => {
+  assert.equal(dayNumber({ y: 2026, m: 3, d: 30 }) - dayNumber({ y: 2026, m: 3, d: 29 }), 1);
+});
+
+test('Day numbers: fromDayNumber is the inverse of dayNumber', () => {
+  for (const date of [{ y: 2028, m: 2, d: 29 }, { y: 2026, m: 12, d: 31 }]) {
+    assert.deepEqual(fromDayNumber(dayNumber(date)), date);
+  }
 });

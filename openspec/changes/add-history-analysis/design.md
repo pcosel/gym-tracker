@@ -121,7 +121,7 @@ The two icons live in `history.js`, not in `icons.js`. `icons.js` holds only exe
 - **The views:** Today has no hash, the History page is `#history`, and an exercise's detail is `#history/<encodeURIComponent(name)>`.
 - **The switch:** it is two links, `href="#"` and `href="#history"`. Each exercise in the list and the History link in each editor are links too. Every navigation is therefore a browser-history entry with no extra code, and the phone's back button walks back through them.
 - **Rendering:** `app.js` listens for `hashchange` and shows the view that matches the hash.
-- **The detail's back control:** it is labelled "Back" and always calls `history.back()`, so it returns to the list or to the editor, whichever the detail was opened from. A reload clears the hash and starts on Today, so every detail has a previous view inside the app.
+- **The detail's back control:** a chevron link with no visible text, so it does not read as one of the window buttons. Its accessible name is "Back". It calls `history.back()`, so it returns to the list or to the editor, whichever the detail was opened from. A reload clears the hash and starts on Today, so every detail has a previous view inside the app.
 - **On load:** `enterApp` clears a leftover hash with `history.replaceState` before showing Today, so a reload always starts on Today.
 - **Unexpected hashes:** a name that matches no exercise, or a malformed `%` sequence, shows the list. If two exercises have the same name, the first in header order wins.
 - **Missing year tab:** the hash is ignored when the tab is missing.
@@ -134,7 +134,7 @@ Before it renders the History page, the `hashchange` handler blurs a focused fie
 ### Page layout: History sits inside `#workout`
 `#workout` becomes:
 - `nav#page-switch` with the two links. The current one has `aria-current="page"`;
-- `#summary`, unchanged and shown on both pages, so the save status, Retry and "Sign in to save" stay visible during the history;
+- `#summary`, shown on both pages, so the save status, Retry and "Sign in to save" stay visible during the history. Only its `#done-count` is hidden on the History page, where "N exercises done today" has no use;
 - `#today-view`, wrapping `#tiles` and `#editor`;
 - `#history`, hidden on Today.
 
@@ -153,7 +153,7 @@ Switching only toggles `hidden` on `#today-view` and `#history`, so the editor's
 - **`svg.js`:** `svgElement` and `buildIcon` move here from `today.js`, so the exercise list can show the same icons.
 - **`showHistory({ rows, today, tab, name })`:** renders the overview, or the detail when `name` matches an exercise.
 - **Window:** the chosen window is module state in `history.js`, starting as `{ days: 30 }`. It lasts until the page reloads.
-- **Window controls:** three buttons with `aria-pressed`, and a text input with `inputmode="numeric"` labelled "Days". The input applies on `change`, and takes a whole number of at least 1. Other input gets `aria-invalid` and leaves the window as it was.
+- **Window controls:** three buttons with `aria-pressed`, and a text input with `inputmode="numeric"` labelled "Days". The label sits 0.5rem above the field, so the field's focus outline does not cover it. The input applies on `change`, and takes a whole number of at least 1. Other input gets `aria-invalid` and leaves the window as it was.
 - **Sheet text:** it is set only through `textContent`, as on the Today page.
 
 Wording, so that list and detail agree:

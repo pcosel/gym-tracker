@@ -168,3 +168,60 @@ input[aria-invalid="true"] { border: 2px solid var(--danger); background: #fdece
 
 /* Confetti: a layer above the page that never takes a tap */
 canvas.confetti { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1000; }
+/* Today / History switch */
+#page-switch { display: flex; gap: 0.5rem; margin: 0.5rem 0; }
+#page-switch a {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.75rem;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  text-decoration: none;
+}
+#page-switch a[aria-current="page"] { color: #fff; background: var(--done); border-color: var(--done); font-weight: 600; }
+
+/* Editor heading with its History link */
+.exercise-head { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; margin-bottom: 0.75rem; }
+.exercise-head h3 { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.exercise-head a { flex: none; display: inline-flex; align-items: center; min-height: 2.75rem; padding: 0 0.25rem; color: var(--done); }
+
+/* History page */
+#history h3 { margin: 0; }
+.year, .exercise-list, .detail { margin: 0.75rem 0; padding: 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: 1rem; }
+.year h3 { margin-bottom: 0.5rem; }
+.exercise-list { padding-bottom: 0.5rem; }
+.list-head { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; margin-bottom: 0.25rem; }
+.order { display: flex; align-items: center; justify-content: center; width: 2.75rem; padding: 0; }
+.order svg { display: block; width: 1.5rem; height: 1.5rem; }
+.exercise-list ul { list-style: none; margin: 0; padding: 0; }
+.exercise-list li + li { border-top: 1px solid var(--border); }
+.exercise-list a { display: flex; align-items: center; gap: 0.75rem; min-height: 2.75rem; padding: 0.4rem 0; color: var(--text); text-decoration: none; }
+.exercise-list .icon svg { display: block; width: 1.5rem; height: 1.5rem; }
+.exercise-list .name { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.exercise-list .last-done { flex: none; color: var(--muted); font-size: 0.9rem; }
+
+.detail-head { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; }
+.detail-head h3 { min-width: 0; overflow-wrap: anywhere; }
+.back { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 2.75rem; min-height: 2.75rem; margin-left: -0.75rem; color: var(--done); }
+.back svg { display: block; width: 1.75rem; height: 1.75rem; }
+.window { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 0.5rem; margin-bottom: 0.75rem; }
+.window button[aria-pressed="true"] { color: #fff; background: var(--done); border-color: var(--done); }
+.window label { flex: 1 1 5rem; }
+.window label span { display: block; margin-bottom: 0.5rem; font-size: 0.85rem; color: var(--muted); }
+.note { color: var(--muted); font-size: 0.9rem; }
+.frequency { font-weight: 600; }
+.averages { margin: 0.5rem 0; }
+.averages div { display: flex; justify-content: space-between; gap: 0.75rem; padding: 0.2rem 0; }
+.averages dt { color: var(--muted); }
+.averages dd { margin: 0; font-weight: 600; }
+.caption { margin-top: 0.75rem; font-size: 0.9rem; color: var(--muted); }
+
+.graph { display: block; width: 100%; height: auto; color: var(--done); }
+.graph .axis { stroke: var(--border); stroke-width: 1; }
+.graph .line { stroke: currentColor; stroke-width: 2; stroke-linejoin: round; }
+.graph .point { fill: currentColor; }
+.graph text { font-size: 11px; fill: var(--muted); }

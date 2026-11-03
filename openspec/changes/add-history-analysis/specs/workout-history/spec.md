@@ -127,6 +127,14 @@ While the History page is shown, the workout screen SHALL keep showing the save 
 - **WHEN** a save of Latzug fails after the user switched to the History page
 - **THEN** the History page shows that the changes are not saved and offers to retry
 
+### Requirement: The History page does not show the done counter
+While the History page is shown, the workout screen SHALL NOT show the number of exercises done today. The Today page SHALL show it again.
+
+#### Scenario: Counter on History
+- **WHEN** Latzug is done today and the user switches to History
+- **THEN** the screen does not show "1 exercise done today"
+- **AND** after switching back to Today it shows it again
+
 ### Requirement: The year so far counts workouts, sets and reps
 The History page SHALL show, for the current year, the number of workouts, the number of readable sets in all sessions, and the sum of their reps. When the year has no workout yet, it SHALL say so instead.
 
@@ -230,7 +238,7 @@ Above the list, one button SHALL reverse the order: exercises not done this year
 - **AND** after the user selects the button, it announces "Longest ago first"
 
 ### Requirement: Selecting an exercise opens its detail
-Selecting an exercise in the list SHALL show its detail: its name, the window choice, how often and how long ago it was done, its averages and its graph. The detail SHALL offer a way back that returns to the previous view, as the browser's back button does.
+Selecting an exercise in the list SHALL show its detail: its name, the window choice, how often and how long ago it was done, its averages and its graph. The detail SHALL offer a way back that returns to the previous view, as the browser's back button does. The way back SHALL be a chevron link with no visible text, whose accessible name is "Back".
 
 #### Scenario: Opening and closing a detail
 - **WHEN** the user selects Latzug in the list
