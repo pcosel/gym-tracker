@@ -136,7 +136,7 @@ Groups 1–5 are implemented in the git worktree above, on branch `worktree-add-
   5. Reload, and check that Today shows the set and History gives the same numbers as in step 3.
 
   Verify in the development sheet that only today's row changed.
-- [ ] 5.2 Commit all work in the worktree. From the main checkout, fast-forward `main` to the worktree branch (`git merge --ff-only worktree-add-history-analysis`). Do not push. Verify that `git log main -1` matches the worktree branch head, and that `git status` on `main` is clean.
+- [x] 5.2 Commit all work in the worktree. From the main checkout, fast-forward `main` to the worktree branch (`git merge --ff-only worktree-add-history-analysis`). Do not push. Verify that `git log main -1` matches the worktree branch head, and that `git status` on `main` is clean.
 - [ ] 5.3 (Manual, user) Push `main` to `origin`. Verify that the `pages-build-deployment` run for that commit succeeds, or that the deployed `history.js` matches the commit.
 
 ## 6. Live verification
