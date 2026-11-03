@@ -108,14 +108,14 @@ Groups 1–5 are implemented in the git worktree above, on branch `worktree-last
   4. Reload the page.
 
   Verify that confetti played once, at the change to green, and not on reload. Also verify that the last-time date and day count are still the ones noted, and that only today's row changed in the development sheet.
-- [ ] 5.2 Commit all work in the worktree. From the main checkout, fast-forward `main` to the worktree branch (`git merge --ff-only worktree-last-time-link-confetti`). Do not push. Verify that `git log main -1` matches the worktree branch head, and that `git status` on `main` is clean.
-- [ ] 5.3 (Manual, user) Push `main` to `origin`. Verify that the `pages-build-deployment` run for that commit succeeds, or that the deployed `today.js` matches the commit.
+- [x] 5.2 Commit all work in the worktree. From the main checkout, fast-forward `main` to the worktree branch (`git merge --ff-only worktree-last-time-link-confetti`). Do not push. Verify that `git log main -1` matches the worktree branch head, and that `git status` on `main` is clean.
+- [x] 5.3 (Manual, user) Push `main` to `origin`. Verify that the `pages-build-deployment` run for that commit succeeds, or that the deployed `today.js` matches the commit.
 
 ## 6. Live verification
 
 These checks run against the deployed site after 5.3, so they are checked off in a follow-up commit.
 
-- [ ] 6.1 Read-only check on a desktop browser at `https://pcosel.github.io/gym-tracker/`. Sign in and open a few tiles without typing. Check that each last-time date matches the real sheet, and that its day count matches the calendar. Select the title and check that it opens the real sheet on this year's tab, in a new browser tab. Verify that the Network tab shows no `values:batchUpdate` and that the console shows no errors from this app's code.
+- [x] 6.1 Read-only check on a desktop browser at `https://pcosel.github.io/gym-tracker/`. Sign in and open a few tiles without typing. Check that each last-time date matches the real sheet, and that its day count matches the calendar. Select the title and check that it opens the real sheet on this year's tab, in a new browser tab. Verify that the Network tab shows no `values:batchUpdate` and that the console shows no errors from this app's code.
 - [ ] 6.2 (Manual, user) At the next workout, log it with the app on the phone. Record in this task:
   - whether confetti showed above the keyboard when a tile turned green while typing, and ran smoothly;
   - whether, when going straight from the last set to the next exercise's tile, the confetti clearly came from the exercise that improved;
