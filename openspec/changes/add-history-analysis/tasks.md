@@ -137,13 +137,13 @@ Groups 1–5 are implemented in the git worktree above, on branch `worktree-add-
 
   Verify in the development sheet that only today's row changed.
 - [x] 5.2 Commit all work in the worktree. From the main checkout, fast-forward `main` to the worktree branch (`git merge --ff-only worktree-add-history-analysis`). Do not push. Verify that `git log main -1` matches the worktree branch head, and that `git status` on `main` is clean.
-- [ ] 5.3 (Manual, user) Push `main` to `origin`. Verify that the `pages-build-deployment` run for that commit succeeds, or that the deployed `history.js` matches the commit.
+- [x] 5.3 (Manual, user) Push `main` to `origin`. Verify that the `pages-build-deployment` run for that commit succeeds, or that the deployed `history.js` matches the commit.
 
 ## 6. Live verification
 
 These checks run against the deployed site after 5.3, so they are checked off in a follow-up commit.
 
-- [ ] 6.1 Read-only check on a desktop browser at `https://pcosel.github.io/gym-tracker/`. Sign in, open History and three exercises' details, and switch between the windows. Then tap one tile and open its detail with the editor's History link, without typing anything on the Today page. Verify that the Network tab shows no request while browsing the history and no `values:batchUpdate` at all, and that the console shows no errors from this app's code.
+- [x] 6.1 Read-only check on a desktop browser at `https://pcosel.github.io/gym-tracker/`. Sign in, open History and three exercises' details, and switch between the windows. Then tap one tile and open its detail with the editor's History link, without typing anything on the Today page. Verify that the Network tab shows no request while browsing the history and no `values:batchUpdate` at all, and that the console shows no errors from this app's code.
 - [ ] 6.2 (Manual, user) At the next workout, use the History page on the phone. In this task, record whether the exercise list and the details answered "what should I do next?" and "am I progressing?".
 
 ## Workflow follow-up
