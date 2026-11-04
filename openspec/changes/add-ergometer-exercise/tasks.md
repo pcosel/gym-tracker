@@ -182,7 +182,7 @@ Groups 1–7 are implemented in the git worktree above, on branch `worktree-add-
   - after the reload, both tiles keep their state and Ergometer's editor shows today's values;
   - the History detail counts today's session;
   - only today's row changed in the development sheet, with Ergometer's cells as text.
-- [ ] 7.2 Commit all work in the worktree. From the main checkout, fast-forward `main` to the worktree branch (`git merge --ff-only worktree-add-ergometer-exercise`). Do not push. Verify that `git log main -1` matches the worktree branch head, and that `git status` on `main` is clean.
+- [x] 7.2 Commit all work in the worktree. From the main checkout, fast-forward `main` to the worktree branch (`git merge --ff-only worktree-add-ergometer-exercise`). Do not push. Verify that `git log main -1` matches the worktree branch head, and that `git status` on `main` is clean.
 - [ ] 7.3 (Manual, user) Push `main` to `origin`. Verify that the `pages-build-deployment` run for that commit succeeds, or that the deployed `icons.js` matches the commit.
 
 ## 8. Live verification
