@@ -136,7 +136,7 @@ Groups 1–7 are implemented in the git worktree above, on branch `worktree-add-
 
   In `tests/workout.test.js`, add that `tileLabels` with `iconFor` gives `null` for Ergometer. Verify that `npm test` passes. On `localhost`, check that Ergometer's tile shows the icon in all three states, and that the History list shows it next to Ergometer.
 - [x] 5.2 Update `README.md` ("Tiles"): 17 exercises have an icon, with Ergometer in the list. Verify that the list matches the keys of `ICONS`.
-- [ ] 5.3 (Manual, user) On `localhost` at 360px width, with some tiles done and some improved, look at the tile grid next to `ergometer-icon.svg`. Confirm that Ergometer's icon looks as approved, especially next to Beinstrecker.
+- [x] 5.3 (Manual, user) On `localhost` at 360px width, with some tiles done and some improved, look at the tile grid next to `ergometer-icon.svg`. Confirm that Ergometer's icon looks as approved, especially next to Beinstrecker.
 
 ## 6. History
 
@@ -183,7 +183,7 @@ Groups 1–7 are implemented in the git worktree above, on branch `worktree-add-
   - the History detail counts today's session;
   - only today's row changed in the development sheet, with Ergometer's cells as text.
 - [x] 7.2 Commit all work in the worktree. From the main checkout, fast-forward `main` to the worktree branch (`git merge --ff-only worktree-add-ergometer-exercise`). Do not push. Verify that `git log main -1` matches the worktree branch head, and that `git status` on `main` is clean.
-- [ ] 7.3 (Manual, user) Push `main` to `origin`. Verify that the `pages-build-deployment` run for that commit succeeds, or that the deployed `icons.js` matches the commit.
+- [x] 7.3 (Manual, user) Push `main` to `origin`. Verify that the `pages-build-deployment` run for that commit succeeds, or that the deployed `icons.js` matches the commit.
 
 ## 8. Live verification
 
@@ -195,6 +195,7 @@ These checks run against the deployed site after 7.3, so they are checked off in
   - its History detail shows the intensity and time averages.
 
   Verify that the Network tab shows no `values:batchUpdate`, and that the console shows no errors from this app's code.
+  Checked 04.11.2026 after the deploy: the icon shows on the tile and in the History list, no `values:batchUpdate` went out, and the console showed only Google sign-in and favicon errors. The real sheet has no Ergometer row yet ("not done this year", no last-time line), so the placeholder and the averages stay open until the first real Ergometer row exists.
 - [ ] 8.2 (Manual, user) At the next workout, log Ergometer with the app on the phone. Record in this task:
   - whether typing the time as digits, with the field formatting it as you type, was quick and clear, and whether correcting a time with the delete key worked as expected;
   - whether the icon was recognisable at a glance;
