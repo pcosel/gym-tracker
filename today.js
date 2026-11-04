@@ -5,6 +5,7 @@ import * as auth from './auth.js';
 import { readTab, writeCells } from './api.js';
 import {
   buildToday, initialState, cellsFor, writesFor, removeSet, tileLabels, progressOf,
+  timedProgressOf, formatTimeInput,
 } from './workout.js';
 import { iconFor } from './icons.js';
 import { formatDate, daysBetween } from './sheet-format.js';
@@ -65,11 +66,7 @@ export function startWorkout({ tab: tabTitle, rows, today: date }) {
     state: initialState(exercise),
     icon: iconFor(exercise.name),
     label: labels[i],
-    progress: progressOf(
-      exercise.today || { weightText: '', repsText: '' },
-      exercise.last,
-      exercise.assisted,
-    ),
+    progress: progressFor({ exercise }, exercise.today || { weightText: '', repsText: '' }),
     cells: exercise.today
       ? { weightText: exercise.today.weightText, repsText: exercise.today.repsText }
       : { weightText: '', repsText: '' },
@@ -102,6 +99,14 @@ export function currentRows() {
       ...cells,
     })),
   );
+}
+
+// The progress of an exercise's cells: a timed exercise compares its intensity
+// and time, any other its sets.
+function progressFor({ exercise }, cells) {
+  return exercise.timed
+    ? timedProgressOf(cells, exercise.last)
+    : progressOf(cells, exercise.last, exercise.assisted);
 }
 
 // ---- Rendering ----
@@ -160,13 +165,43 @@ function buildExercise(item) {
   if (exercise.last) section.append(buildLastTime(exercise.last));
 
   if (state.mode === 'text') {
-    const weight = textInput(state.weightText, { inputmode: 'text', label: `${exercise.name} weight` });
-    const reps = textInput(state.repsText, { inputmode: 'text', label: `${exercise.name} reps` });
+    const [firstName, secondName] = exercise.timed ? ['intensity', 'time'] : ['weight', 'reps'];
+    const weight = textInput(state.weightText, { inputmode: 'text', label: `${exercise.name} ${firstName}` });
+    const reps = textInput(state.repsText, { inputmode: 'text', label: `${exercise.name} ${secondName}` });
     weight.addEventListener('input', () => { state.weightText = weight.value; });
     reps.addEventListener('input', () => { state.repsText = reps.value; });
     weight.addEventListener('change', () => onChange(item));
     reps.addEventListener('change', () => onChange(item));
-    section.append(labelled('Weight', weight), labelled('Reps', reps));
+    section.append(
+      labelled(exercise.timed ? 'Intensity' : 'Weight', weight),
+      labelled(exercise.timed ? 'Time' : 'Reps', reps),
+    );
+    return section;
+  }
+
+  if (state.mode === 'timed') {
+    const intensity = textInput(state.intensity, {
+      inputmode: 'numeric',
+      label: `${exercise.name} intensity`,
+    });
+    const time = textInput(state.time, {
+      inputmode: 'numeric',
+      label: `${exercise.name} time in minutes and seconds`,
+      placeholder: state.placeholder,
+    });
+    intensity.dataset.field = 'intensity';
+    time.dataset.field = 'time';
+    intensity.addEventListener('input', () => { state.intensity = intensity.value; });
+    // The field shows the digits typed as m:ss, with the cursor kept at the end.
+    // Nothing is marked or saved until the field is left.
+    time.addEventListener('input', () => {
+      time.value = formatTimeInput(time.value).text;
+      state.time = time.value;
+      time.setSelectionRange(time.value.length, time.value.length);
+    });
+    intensity.addEventListener('change', () => onChange(item));
+    time.addEventListener('change', () => onChange(item));
+    section.append(labelled('Intensity', intensity), labelled('Time', time));
     return section;
   }
 
@@ -324,6 +359,10 @@ function markInvalid(item, flags) {
     if (bad) input.setAttribute('aria-invalid', 'true');
     else input.removeAttribute('aria-invalid');
   };
+  for (const field of ['intensity', 'time']) {
+    const input = element.querySelector(`input[data-field="${field}"]`);
+    if (input) mark(input, flags ? flags[field] : false);
+  }
   if (weight) mark(weight, flags ? flags.weight : false);
   ['reps', 'ownWeight'].forEach((field) => {
     setInputs(field).forEach((input, i) => mark(input, flags ? flags.sets[i][field] : false));
@@ -362,7 +401,7 @@ function onChange(item) {
   if (cells.ok) {
     const before = item.progress;
     item.cells = { weightText: cells.weightText, repsText: cells.repsText };
-    item.progress = progressOf(cells, item.exercise.last, item.exercise.assisted);
+    item.progress = progressFor(item, cells);
     renderTile(item);
     renderCounter();
     if (before !== 'improved' && item.progress === 'improved') {

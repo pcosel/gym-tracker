@@ -3,7 +3,7 @@
 // text from the sheet goes in through textContent, never as HTML.
 import { iconFor } from './icons.js';
 import { buildIcon, svgElement } from './svg.js';
-import { formatDate, formatWeight, fromDayNumber } from './sheet-format.js';
+import { formatDate, formatWeight, formatTime, fromDayNumber } from './sheet-format.js';
 import {
   historyOf,
   exerciseOrder,
@@ -254,7 +254,14 @@ function buildResults(exercise, today) {
         row.append(el('dt', term), el('dd', value));
         list.append(row);
       };
-      add('Reps per session', formatWeight(summary.averageReps));
+      if (exercise.timed) {
+        if (summary.averageIntensity !== null) {
+          add('Intensity per session', formatWeight(summary.averageIntensity));
+        }
+        add('Time per session', formatTime(summary.averageTime));
+      } else {
+        add('Reps per session', formatWeight(summary.averageReps));
+      }
       if (summary.averageWeight !== null) {
         add(
           exercise.assisted ? 'Assistance per session' : 'Weight per session',
@@ -275,10 +282,8 @@ function buildResults(exercise, today) {
   }
 
   if (summary.points.length >= 2) {
-    nodes.push(
-      el('p', exercise.assisted ? 'Assistance (kg), lower is better' : 'Estimated 1RM (kg)', 'caption'),
-      buildGraph(summary.points, win, exercise.assisted),
-    );
+    const measure = measureOf(exercise);
+    nodes.push(el('p', measure.caption, 'caption'), buildGraph(summary.points, win, measure));
   } else {
     nodes.push(el('p', 'There is not enough data for a graph in this window.', 'note'));
   }
@@ -289,7 +294,24 @@ function buildResults(exercise, today) {
 
 const dateOf = (day) => formatDate(fromDayNumber(day));
 
-function buildGraph(points, win, assisted) {
+// What a graph plots: `name` and `caption` for its text, `format` for its
+// values, and `unit` after each value in the accessible name.
+function measureOf(exercise) {
+  if (exercise.timed) {
+    return { name: 'Time per session', caption: 'Time per session', format: formatTime, unit: '' };
+  }
+  if (exercise.assisted) {
+    return {
+      name: 'Assistance',
+      caption: 'Assistance (kg), lower is better',
+      format: formatWeight,
+      unit: ' kg',
+    };
+  }
+  return { name: 'Estimated 1RM', caption: 'Estimated 1RM (kg)', format: formatWeight, unit: ' kg' };
+}
+
+function buildGraph(points, win, { name, format, unit }) {
   const width = 320;
   const height = 180;
   const left = 44;
@@ -316,12 +338,11 @@ function buildGraph(points, win, assisted) {
 
   const firstPoint = points[0];
   const lastPoint = points[points.length - 1];
-  const name = assisted ? 'Assistance' : 'Estimated 1RM';
   const svg = svgElement('svg', {
     class: 'graph',
     viewBox: `0 0 ${width} ${height}`,
     role: 'img',
-    'aria-label': `${name} over ${points.length} sessions, from ${formatWeight(firstPoint.value)} kg on ${dateOf(firstPoint.day)} to ${formatWeight(lastPoint.value)} kg on ${dateOf(lastPoint.day)}`,
+    'aria-label': `${name} over ${points.length} sessions, from ${format(firstPoint.value)}${unit} on ${dateOf(firstPoint.day)} to ${format(lastPoint.value)}${unit} on ${dateOf(lastPoint.day)}`,
   });
   svg.append(
     svgElement('path', {
@@ -344,9 +365,9 @@ function buildGraph(points, win, assisted) {
     node.textContent = text;
     return node;
   };
-  svg.append(label(formatWeight(highest), { x: left - 6, y: y(highest), dy: '0.35em', 'text-anchor': 'end' }));
+  svg.append(label(format(highest), { x: left - 6, y: y(highest), dy: '0.35em', 'text-anchor': 'end' }));
   if (lowest !== highest) {
-    svg.append(label(formatWeight(lowest), { x: left - 6, y: y(lowest), dy: '0.35em', 'text-anchor': 'end' }));
+    svg.append(label(format(lowest), { x: left - 6, y: y(lowest), dy: '0.35em', 'text-anchor': 'end' }));
   }
   svg.append(
     label(dateOf(first).slice(0, 6), { x: left, y: height - 8, 'text-anchor': 'start' }),

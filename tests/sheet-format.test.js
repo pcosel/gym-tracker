@@ -9,6 +9,10 @@ import {
   hasCarryOverRow,
   parseWeight,
   parseReps,
+  isTimed,
+  parseIntensity,
+  parseTime,
+  formatTime,
   formatWeight,
   formatSets,
   columnLetter,
@@ -22,8 +26,8 @@ import {
 test('Merged header: a merged pair keeps its name in the first column', () => {
   const row1 = ['Datum', 'Bankdrücken', '', 'Bauchmaschine', ''];
   assert.deepEqual(parseHeader(row1), [
-    { name: 'Bankdrücken', weightCol: 1, repsCol: 2 },
-    { name: 'Bauchmaschine', weightCol: 3, repsCol: 4 },
+    { name: 'Bankdrücken', weightCol: 1, repsCol: 2, timed: false },
+    { name: 'Bauchmaschine', weightCol: 3, repsCol: 4, timed: false },
   ]);
 });
 
@@ -31,7 +35,7 @@ test('Unmerged header: the reps column is the weight column + 1', () => {
   const row1 = new Array(25).fill('');
   row1[0] = 'Datum';
   row1[25] = 'Latzug';
-  assert.deepEqual(parseHeader(row1), [{ name: 'Latzug', weightCol: 25, repsCol: 26 }]);
+  assert.deepEqual(parseHeader(row1), [{ name: 'Latzug', weightCol: 25, repsCol: 26, timed: false }]);
 });
 
 test('a header pair with an empty name is skipped', () => {
@@ -47,6 +51,38 @@ test('duplicate names stay separate exercises, keyed by column', () => {
   assert.deepEqual(
     parseHeader(row1).map((e) => e.weightCol),
     [1, 3],
+  );
+});
+
+test('Ergometer in the header: a timed exercise with intensity and time columns', () => {
+  const row1 = new Array(33).fill('');
+  row1[0] = 'Datum';
+  row1[33] = 'Ergometer';
+  assert.deepEqual(parseHeader(row1), [
+    { name: 'Ergometer', weightCol: 33, repsCol: 34, timed: true },
+  ]);
+});
+
+test('Different case: ERGOMETER is timed', () => {
+  assert.equal(parseHeader(['Datum', 'ERGOMETER', ''])[0].timed, true);
+  assert.equal(isTimed('ergometer'), true);
+});
+
+test('a name with surrounding spaces is timed', () => {
+  assert.equal(isTimed(' Ergometer '), true);
+  assert.equal(parseHeader(['Datum', ' Ergometer ', ''])[0].timed, true);
+});
+
+test('Different spelling: Fahrradergometer is not timed', () => {
+  assert.equal(isTimed('Fahrradergometer'), false);
+  assert.equal(parseHeader(['Datum', 'Fahrradergometer', ''])[0].timed, false);
+});
+
+test('every other exercise in a header is not timed', () => {
+  const row1 = ['Datum', 'Bankdrücken', '', 'Latzug', '', 'Ergometer', ''];
+  assert.deepEqual(
+    parseHeader(row1).map((e) => e.timed),
+    [false, false, true],
   );
 });
 
@@ -259,5 +295,60 @@ test('Day numbers: the change to summer time is still 1 day', () => {
 test('Day numbers: fromDayNumber is the inverse of dayNumber', () => {
   for (const date of [{ y: 2028, m: 2, d: 29 }, { y: 2026, m: 12, d: 31 }]) {
     assert.deepEqual(fromDayNumber(dayNumber(date)), date);
+  }
+});
+
+test('Intensities: whole numbers with surrounding spaces', () => {
+  assert.deepEqual(parseIntensity('8'), { value: 8, unreadable: false });
+  assert.equal(parseIntensity(' 12').value, 12);
+  assert.equal(parseIntensity('10 ').value, 10);
+});
+
+test('Minutes and seconds', () => {
+  assert.deepEqual(parseTime('3:30'), { seconds: 210, unreadable: false });
+  assert.equal(parseTime('12:05').seconds, 725);
+  assert.equal(parseTime('0:45').seconds, 45);
+});
+
+test('An hour or more: 75:00 is 75 minutes', () => {
+  assert.equal(parseTime('75:00').seconds, 4500);
+});
+
+test('Leading zero and time typed by hand: "03:30" is 3:30', () => {
+  assert.equal(parseTime('03:30').seconds, 210);
+});
+
+test('empty and blank intensity and time cells have no value and are not unreadable', () => {
+  assert.deepEqual(parseIntensity(''), { value: null, unreadable: false });
+  assert.deepEqual(parseIntensity('  '), { value: null, unreadable: false });
+  assert.deepEqual(parseTime(''), { seconds: null, unreadable: false });
+  assert.deepEqual(parseTime('  '), { seconds: null, unreadable: false });
+});
+
+test('Intensity that is not a whole number', () => {
+  assert.equal(parseIntensity('8.5').unreadable, true);
+  assert.equal(parseIntensity('8 (Stufe)').unreadable, true);
+});
+
+test('Time that does not follow the notation', () => {
+  for (const text of ['20 min', '3.30', '3:5', '3:75', '1:03:30']) {
+    assert.deepEqual(parseTime(text), { seconds: null, unreadable: true }, text);
+  }
+});
+
+test('Several intensities and several times are unreadable', () => {
+  for (const text of ['8, 9', '8 9']) assert.equal(parseIntensity(text).unreadable, true, text);
+  for (const text of ['3:30, 2:00', '3:30 2:00']) assert.equal(parseTime(text).unreadable, true, text);
+});
+
+test('Short and long times (writing)', () => {
+  assert.equal(formatTime(185), '3:05');
+  assert.equal(formatTime(45), '0:45');
+  assert.equal(formatTime(4500), '75:00');
+});
+
+test('parsing a formatted time gives back the same seconds', () => {
+  for (const seconds of [0, 59, 60, 725, 4500]) {
+    assert.equal(parseTime(formatTime(seconds)).seconds, seconds);
   }
 });

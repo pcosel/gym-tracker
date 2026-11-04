@@ -51,11 +51,14 @@ Both use the same OAuth client. The development sheet is a copy (File > Make a c
 The app reads the layout and notation from the sheet and writes in the same notation.
 
 - **One tab per year.** The app uses only the tab named after the current year (for example `2026`). It never reads another tab and never creates one.
-- **Header row (row 1).** From column B on, each exercise is a pair of columns: weight, then reps. Its name is the trimmed text in row 1 above the weight column. Merged headers (B1:C1) and unmerged ones both work, and a pair with an empty name is not an exercise.
+- **Header row (row 1).** From column B on, each exercise is a pair of columns: weight, then reps (intensity, then time, for Ergometer). Its name is the trimmed text in row 1 above the weight column. Merged headers (B1:C1) and unmerged ones both work, and a pair with an empty name is not an exercise.
 - **Carry-over row (row 2).** If A2 holds a four-digit year, row 2 holds the last values of the previous year. You maintain it by hand and the app only reads it.
 - **One row per day.** Column A holds the date as text, `dd.mm.yyyy` (`5.9.2026` is read too). Other rows are ignored.
 - **Weight cell.** One number in kilograms, with a dot or comma as decimal separator when reading.
 - **Reps cell.** The sets in order, separated by commas: `12, 10, 10`. A set can carry its own weight after `@`, with a dot as decimal separator: `12@40, 10, 10@55`. A set without `@` used the weight cell.
+- **Ergometer.** Only the exact name "Ergometer", ignoring case, makes an exercise timed. Its column pair holds the intensity, then the time, instead of the weight and the reps.
+  - **Intensity cell.** One whole number with no unit (`8`). `8.5`, `8 (Stufe)` and a list such as `8, 9` are unreadable.
+  - **Time cell.** One time as `m:ss` (`3:30`, `12:05`, `75:00`), with seconds from 00 to 59. A hand-typed time shows in Sheets as `03:30` and is read as 3:30. A time of 24 minutes or more must be logged with the app, or typed with a leading apostrophe (`'45:00`), because Sheets would wrap it. `20 min`, `3.30`, `3:5`, `3:75`, `1:03:30` and a list such as `3:30, 2:00` are unreadable. Unlike the reps cell, neither cell takes several values.
 - **Unreadable cells.** A weight that is not one number (`25 (Seil)`), or a reps entry that does not follow the notation (`?`, `10, 7,@60 7`), is unreadable. The app never rewrites such a cell on its own, and edits it as plain text.
 - **Hidden dates.** In columns formatted as "Automatic" (Latzug and the columns after it), Google Sheets turned some reps entries into dates. They display as typed (`10, 8, 07`) and the app reads the displayed text. Cells the app writes are always text, so they are left-aligned in those columns.
 - **Writes are narrow.** A save writes only the exercise's weight and reps cells, plus the date cell when it creates the row. Other cells, formatting and merged cells are not touched.
@@ -67,7 +70,7 @@ The screen shows today's date, the number of exercises done today, the save stat
 ### Tiles
 
 - A tile shows an icon if the exercise has one, and two letters of its name otherwise. The full name is the tile's tooltip and part of its accessible name.
-- These 16 exercises have an icon: Bankdrücken, Bauchmaschine, Rückenheben, Bizepsmaschine, Seitheber, Schulterpresse, Trizepspull, Ruderzug, Butterfly, Beinpresse, Klimmzüge, Beinstrecker, Latzug, Duale Schulterpresse, Brustpresse and Crunchmaschine.
+- These 17 exercises have an icon: Bankdrücken, Bauchmaschine, Rückenheben, Bizepsmaschine, Seitheber, Schulterpresse, Trizepspull, Ruderzug, Butterfly, Beinpresse, Klimmzüge, Beinstrecker, Latzug, Duale Schulterpresse, Brustpresse, Crunchmaschine and Ergometer.
   - A header name matches ignoring upper and lower case and an "(assistiert)" marker. Any other spelling, such as "Klimmzug", shows letters instead of a wrong icon.
   - Only "Klimmzüge (assistiert)" shows the upward assistance arrow. Klimmzüge without the marker shows the same figure without it, and no other exercise has an arrow.
   - A new icon is a new entry in `icons.js`, drawn by the rules in the design of the `exercise-icons` change.
@@ -76,6 +79,7 @@ The screen shows today's date, the number of exercises done today, the save stat
   - white: not done today;
   - blue: done today, meaning the reps cell holds at least one set. A weight alone does not count;
   - green: improved, meaning more reps than last time. The reps are added up per weight and compared from the heaviest weight down, so the order of the sets does not matter and an extra set counts. A set's weight is its own `@` weight, otherwise the exercise weight, otherwise 0 kg. For an exercise with "(assistiert)" in its name, the weight is the assistance, so less weight counts as better and an empty weight means no assistance.
+- Ergometer follows its own rule. It is blue when its time cell holds a time (an intensity alone does not count), and green when its intensity is higher than last time, or the same with a longer time. The intensity decides first, as the heaviest weight does for the others, so a higher intensity with a shorter time is green. An empty intensity counts as 0.
 - A white tile with a blue border is not done today, but was done in the last workout. Its accessible name then ends with "done in the last workout". When the tile turns blue or green the border goes, and it comes back if the reps are deleted again.
   - The last workout is the nearest dated row above today's row (or the lowest row, if there is none for today yet) in which any exercise has reps. Rows with only a date or only weights are skipped, and an exercise counts as done there when its reps cell holds at least one set, readable or not.
   - It differs from "last time", which is per exercise and reaches back as far as needed: an exercise skipped in the last workout has no border, though it still has a last time for the prefill and the green rule.
@@ -86,6 +90,7 @@ The screen shows today's date, the number of exercises done today, the save stat
 
 ### Prefill
 
+- Ergometer has an intensity field and a time field instead. Its intensity is copied from last time as a value, and last time's time shows as the time field's placeholder, so prefilled values alone are never saved. Last time is the nearest workout row with a readable time.
 - Each exercise has a weight field and set fields, each set with its reps and its own weight (empty means the set follows the exercise weight). There are at least three set fields, as many as last time's sets and today's sets, and "+ Set" adds more. Each set row has its weight on the left and its reps on the right, and "×" deletes it. Deleting a set that holds reps saves at once.
 - "Last time" is the nearest workout row above today's row (or the last row, if there is no row for today) whose reps cell holds at least one readable set. If none qualifies, it is the carry-over row, provided that holds a readable set.
 - The exercise weight and each set's own weight are copied from last time as values. Last time's reps appear only as placeholders. Prefilled values alone are never saved.
@@ -99,6 +104,7 @@ The screen shows today's date, the number of exercises done today, the save stat
 - Edits made during a save are written afterwards, so the sheet ends up with the latest values.
 - An exercise without any reps keeps both its cells empty, even when it has a weight. Clearing the reps again empties the weight cell too.
 - Weights accept a dot or comma, and reps whole numbers. Other input is marked and not saved.
+- Ergometer has an intensity field (a whole number) and one time field with the numeric keypad. Type the digits: the last two are the seconds, and the field shows them as `m:ss` while you type, so 4, 1 and 5 show `0:04`, `0:41` and `4:15`. Delete digits from the end, like on a timer. Seconds above 59 stay visible but are marked invalid when you leave the field. The time is written as `m:ss` text and the intensity as a whole number. An intensity alone is never saved, and emptying the time empties both cells.
 - An exercise whose cell for today is unreadable shows two plain text fields, and saving writes the entered text unchanged.
 - If the session expired and cannot be renewed silently, the screen stays as it is, says so, and offers "Sign in to save". One tap signs in and saves the values on screen.
 
@@ -111,6 +117,7 @@ When the year's tab exists, a "Today" / "History" switch sits at the top of the 
 - **Year so far.** The number of workouts, sets and reps, the most-done exercise (all of them on a tie, in alphabetical order), and the biggest gain in estimated 1RM in whole percent. The baseline is the carry-over row, or the exercise's first session this year when that row gives no value for it. Assisted exercises never count. Without workouts, it says so.
 - **Exercise list.** Every exercise with its icon and when it was last done ("today", "yesterday", "N days ago", "not done this year"), most recent first. The arrow button next to the heading reverses the order, with the exercises not done this year first. Ties are alphabetical in both orders, ignoring case and with umlauts sorted as their base letter. The order stays until the page reloads.
 - **Detail.** The window is "30 days", "90 days", "This year" or a typed number of days (a whole number, at least 1; other input is marked and ignored). It stays for other exercises until the page reloads. The detail shows how often the exercise was done in the window, when it was last done, the average reps and the average weight per session, and a graph.
+- **Ergometer.** A session is a row whose time cell holds a time. It counts for workouts, last done and most done, but adds no sets or reps to the year so far, and is never the biggest gain. Its detail shows the average intensity (over the sessions that have one) and the average time per session as `m:ss`, instead of reps and weight, and its graph shows the time per session, with no unit. Sessions with an unreadable intensity or time count for how often and are left out of the averages and the graph.
 - **Coverage note.** The history never reads another tab. When a window starts before 1 January, the detail says how many of its days are covered and that earlier workouts are in the previous year's tab.
 - **Averages are per session.** Each session's reps are added up, and its weight is averaged over all its reps, each at its set's weight. The detail shows the mean of these over the sessions. Sessions with an unreadable cell count for how often, but are left out of the averages, and the detail says how many. For an assisted exercise the weight is called assistance.
 - **Graph.** One point per session, with its estimated 1RM by Epley (weight × (1 + reps / 30), best set of the session). It shows a trend, not a true maximum: Epley is too high for many reps, consistently so. Sets at 0 kg or 0 reps and unreadable sessions give no point. For an assisted exercise it shows the lightest assistance per session and says "lower is better". With fewer than two points, it says there is not enough data.

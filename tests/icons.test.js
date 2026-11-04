@@ -5,16 +5,21 @@ import { ICONS, iconFor } from '../icons.js';
 const NAMES = [
   'Bankdrücken', 'Bauchmaschine', 'Rückenheben', 'Bizepsmaschine', 'Seitheber', 'Schulterpresse',
   'Trizepspull', 'Ruderzug', 'Butterfly', 'Beinpresse', 'Klimmzüge', 'Beinstrecker', 'Latzug',
-  'Duale Schulterpresse', 'Brustpresse', 'Crunchmaschine',
+  'Duale Schulterpresse', 'Brustpresse', 'Crunchmaschine', 'Ergometer',
 ];
 
-test('Exercise with an icon: each of the 16 names has its own entry', () => {
+test('Exercise with an icon: each of the 17 names has its own entry', () => {
   assert.deepEqual(Object.keys(ICONS).sort(), [...NAMES].sort());
   for (const name of NAMES) assert.equal(iconFor(name), ICONS[name], name);
 });
 
 test('Different case: the name is matched ignoring case', () => {
   assert.equal(iconFor('LATZUG'), ICONS.Latzug);
+});
+
+test('Ergometer: the name is matched ignoring case', () => {
+  assert.equal(iconFor('Ergometer'), ICONS.Ergometer);
+  assert.equal(iconFor('ERGOMETER'), ICONS.Ergometer);
 });
 
 test('Assisted exercise: the marker does not change the icon', () => {

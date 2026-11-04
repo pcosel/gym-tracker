@@ -624,3 +624,131 @@ test('Equal gains: the first exercise in header order wins', () => {
   ];
   assert.equal(yearSoFar(historyOf(rows, TODAY)).gain.name, 'Latzug');
 });
+
+// Ergometer: a timed exercise. Its two cells hold the intensity and the time.
+
+const ERG = ['Latzug', 'Ergometer'];
+const ergHistory = (...ergRows) => {
+  const { header, row } = sheet(ERG);
+  return historyOf([header, ...ergRows.map(([date, ...cells]) => row(date, { Ergometer: cells }))], TODAY);
+};
+const ergSummary = (ergRows, window = windowDays(30)) =>
+  summaryOf(exerciseOf(ergHistory(...ergRows), 'Ergometer'), window);
+
+test('Ergometer: a row with only an intensity and a time is a session and a workout', () => {
+  const history = ergHistory(['12.10.2026', '8', '3:30']);
+  const exercise = exerciseOf(history, 'Ergometer');
+  assert.equal(exercise.timed, true);
+  assert.equal(exercise.baseline, null);
+  assert.equal(exercise.sessions.length, 1);
+  assert.equal(exercise.sessions[0].intensity.value, 8);
+  assert.equal(exercise.sessions[0].time.seconds, 210);
+  assert.equal(exercise.sessions[0].readable, true);
+  assert.equal(history.workouts, 1);
+});
+
+test('Ergometer intensity only: no session and no workout', () => {
+  const history = ergHistory(['12.10.2026', '8', '']);
+  assert.equal(exerciseOf(history, 'Ergometer').sessions.length, 0);
+  assert.equal(history.workouts, 0);
+});
+
+test('Ergometer: the year so far counts workouts but no sets or reps from it', () => {
+  const { header, row } = sheet(ERG);
+  const rows = [
+    header,
+    row('12.09.2026', { Latzug: ['75', '10, 10'] }),
+    row('01.10.2026', { Ergometer: ['8', '3:30'] }),
+  ];
+  const year = yearSoFar(historyOf(rows, TODAY));
+  assert.equal(year.workouts, 2);
+  assert.equal(year.sets, 2);
+  assert.equal(year.reps, 20);
+});
+
+test('Ergometer can be the most-done exercise', () => {
+  const year = yearSoFar(ergHistory(['01.10.2026', '8', '3:30'], ['08.10.2026', '8', '4:00']));
+  assert.deepEqual(year.mostDone, { names: ['Ergometer'], sessions: 2 });
+});
+
+test('Timed exercise: Ergometer is never the biggest gain', () => {
+  const { header, row } = sheet(ERG);
+  const rows = [
+    header,
+    row('2025', { Ergometer: ['8', '3:30'] }),
+    row('01.10.2026', { Ergometer: ['8', '3:30'] }),
+    row('08.10.2026', { Ergometer: ['12', '10:00'] }),
+  ];
+  assert.equal(yearSoFar(historyOf(rows, TODAY)).gain, null);
+});
+
+test('Two sessions: the average intensity and time, and no reps or weight', () => {
+  const summary = ergSummary([
+    ['01.10.2026', '8', '3:30'],
+    ['08.10.2026', '9', '4:00'],
+  ]);
+  assert.equal(summary.averageIntensity, 8.5);
+  assert.equal(summary.averageTime, 225);
+  assert.equal(summary.averageReps, null);
+  assert.equal(summary.averageWeight, null);
+});
+
+test('Session without an intensity: the intensity average leaves it out', () => {
+  const summary = ergSummary([
+    ['01.10.2026', '', '3:30'],
+    ['08.10.2026', '8', '4:30'],
+  ]);
+  assert.equal(summary.averageIntensity, 8);
+  assert.equal(summary.averageTime, 240);
+});
+
+test('Rounding the time to whole seconds', () => {
+  const summary = ergSummary([
+    ['01.10.2026', '8', '3:40'],
+    ['05.10.2026', '8', '3:40'],
+    ['08.10.2026', '8', '3:41'],
+  ]);
+  assert.equal(summary.averageTime, 220);
+});
+
+test('No intensity at all: no intensity average', () => {
+  const summary = ergSummary([['01.10.2026', '', '3:30']]);
+  assert.equal(summary.averageIntensity, null);
+  assert.equal(summary.averageTime, 210);
+});
+
+test('Unreadable Ergometer session: counted, left out of the averages', () => {
+  const summary = ergSummary([
+    ['01.10.2026', '8', '3:30'],
+    ['08.10.2026', '8', '20 min'],
+  ]);
+  assert.equal(summary.count, 2);
+  assert.equal(summary.leftOut, 1);
+  assert.equal(summary.averageIntensity, 8);
+  assert.equal(summary.averageTime, 210);
+});
+
+test('Time per session: one point per session at its seconds', () => {
+  const summary = ergSummary([
+    ['01.10.2026', '8', '3:30'],
+    ['13.10.2026', '8', '4:00'],
+  ]);
+  assert.deepEqual(summary.points, [
+    { day: day(1, 10), value: 210 },
+    { day: day(13, 10), value: 240 },
+  ]);
+});
+
+test('Unreadable time: the session gives no point', () => {
+  const summary = ergSummary([
+    ['01.10.2026', '8', '3:30'],
+    ['13.10.2026', '8', '20 min'],
+  ]);
+  assert.deepEqual(summary.points, [{ day: day(1, 10), value: 210 }]);
+});
+
+test('a weight-and-sets exercise has no intensity or time average', () => {
+  const summary = latzugSummary([['12.10.2026', '70', '8']]);
+  assert.equal(summary.averageIntensity, null);
+  assert.equal(summary.averageTime, null);
+});

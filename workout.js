@@ -8,6 +8,9 @@ import {
   hasCarryOverRow,
   parseWeight,
   parseReps,
+  parseIntensity,
+  parseTime,
+  formatTime,
   formatDate,
   formatWeight,
   formatSets,
@@ -30,13 +33,17 @@ export function splitAssisted(name) {
 // row number or null, and nextRow the first row below every row that holds any
 // value. lastWorkoutRow is the lowest dated row above today's row (or the
 // lowest of all) with reps for any exercise, or null; the carry-over row never
-// counts. Each exercise is { name, weightCol, repsCol, assisted, today, last,
-// doneLastWorkout }. `today` is null when today's row has neither a weight nor
-// reps for it. `doneLastWorkout` tells whether its reps cell in lastWorkoutRow
-// holds any set, readable or not. `last` is the entry of the exercise's last
-// time (see `read`), plus `date` ({ y, m, d } from column A) for a workout row,
-// or plus `carryOver: true` and `year` (the number in A2) for the carry-over
-// row.
+// counts. Each exercise is { name, weightCol, repsCol, timed, assisted, today,
+// last, doneLastWorkout }. `today` is null when today's row has neither a
+// weight nor reps for it. `doneLastWorkout` tells whether its reps cell in
+// lastWorkoutRow holds any set, readable or not. `last` is the entry of the
+// exercise's last time (see `read`), plus `date` ({ y, m, d } from column A)
+// for a workout row, or plus `carryOver: true` and `year` (the number in A2)
+// for the carry-over row. A timed exercise (Ergometer) holds an intensity and
+// a time in its two columns: its entries have `intensity` and `time` (from
+// parseIntensity and parseTime) in place of `weight` and `reps`, it is done in
+// a row when the time cell is not empty, and its last time needs a readable
+// time.
 export function buildToday(rows, today) {
   const cell = (row, col) => String((rows[row - 1] && rows[row - 1][col]) ?? '');
   const carryOver = hasCarryOverRow(rows);
@@ -51,9 +58,18 @@ export function buildToday(rows, today) {
   }
   const nextRow = rows.length + 1;
 
-  const read = (row, weightCol, repsCol) => {
+  const read = (row, { weightCol, repsCol, timed }) => {
     const weightText = cell(row, weightCol);
     const repsText = cell(row, repsCol);
+    if (timed) {
+      return {
+        row,
+        weightText,
+        repsText,
+        intensity: parseIntensity(weightText),
+        time: parseTime(repsText),
+      };
+    }
     return {
       row,
       weightText,
@@ -62,8 +78,12 @@ export function buildToday(rows, today) {
       reps: parseReps(repsText),
     };
   };
-  const hasReadableSet = (entry) => entry.reps.sets.some((set) => set !== null);
-  const hasEntry = (row, repsCol) => parseReps(cell(row, repsCol)).sets.length > 0;
+  const hasReadable = (entry, { timed }) =>
+    timed
+      ? entry.time.seconds !== null && !entry.time.unreadable
+      : entry.reps.sets.some((set) => set !== null);
+  const hasEntry = (row, { repsCol, timed }) =>
+    timed ? cell(row, repsCol).trim() !== '' : parseReps(cell(row, repsCol)).sets.length > 0;
 
   const header = parseHeader(rows[0] || []);
   const start = todayRow !== null ? todayRow - 1 : rows.length;
@@ -71,35 +91,37 @@ export function buildToday(rows, today) {
   let lastWorkoutRow = null;
   for (let row = start; row >= firstWorkoutRow && lastWorkoutRow === null; row--) {
     if (!parseDate(cell(row, 0))) continue;
-    if (header.some(({ repsCol }) => hasEntry(row, repsCol))) lastWorkoutRow = row;
+    if (header.some((exercise) => hasEntry(row, exercise))) lastWorkoutRow = row;
   }
 
-  const exercises = header.map(({ name, weightCol, repsCol }) => {
+  const exercises = header.map((exercise) => {
+    const { name, weightCol, repsCol, timed } = exercise;
     let todayEntry = null;
     if (todayRow !== null) {
-      const entry = read(todayRow, weightCol, repsCol);
+      const entry = read(todayRow, exercise);
       if (entry.weightText.trim() !== '' || entry.repsText.trim() !== '') todayEntry = entry;
     }
 
     let last = null;
     for (let row = start; row >= firstWorkoutRow && last === null; row--) {
       if (!parseDate(cell(row, 0))) continue;
-      const entry = read(row, weightCol, repsCol);
-      if (hasReadableSet(entry)) last = { ...entry, date: parseDate(cell(row, 0)) };
+      const entry = read(row, exercise);
+      if (hasReadable(entry, exercise)) last = { ...entry, date: parseDate(cell(row, 0)) };
     }
     if (last === null && carryOver) {
-      const entry = read(2, weightCol, repsCol);
-      if (hasReadableSet(entry)) last = { ...entry, carryOver: true, year: Number(cell(2, 0).trim()) };
+      const entry = read(2, exercise);
+      if (hasReadable(entry, exercise)) last = { ...entry, carryOver: true, year: Number(cell(2, 0).trim()) };
     }
 
     return {
       name,
       weightCol,
       repsCol,
+      timed,
       assisted: splitAssisted(name).assisted,
       today: todayEntry,
       last,
-      doneLastWorkout: lastWorkoutRow !== null && hasEntry(lastWorkoutRow, repsCol),
+      doneLastWorkout: lastWorkoutRow !== null && hasEntry(lastWorkoutRow, exercise),
     };
   });
 
@@ -110,8 +132,26 @@ export function buildToday(rows, today) {
 // of its input. In 'text' mode (an unreadable cell today) the two cells' text
 // is edited as it is. In 'sets' mode there is the exercise weight and one
 // field per set, each with its reps, its own weight (empty = follows the
-// exercise weight) and a placeholder from last time.
-export function initialState({ today, last }) {
+// exercise weight) and a placeholder from last time. A timed exercise has the
+// 'timed' mode instead: an intensity (today's, else last time's), today's time
+// as m:ss, and last time's time as the time field's placeholder. Its text mode,
+// for an unreadable intensity or time today, is the same as the other.
+export function initialState({ today, last, timed = false }) {
+  if (timed) {
+    if (today && (today.intensity.unreadable || today.time.unreadable)) {
+      return { mode: 'text', weightText: today.weightText, repsText: today.repsText };
+    }
+    let intensity = '';
+    if (today && today.intensity.value !== null) intensity = String(today.intensity.value);
+    else if (last && last.intensity.value !== null) intensity = String(last.intensity.value);
+    return {
+      mode: 'timed',
+      intensity,
+      time: today && today.time.seconds !== null ? formatTime(today.time.seconds) : '',
+      placeholder: last && last.time.seconds !== null ? formatTime(last.time.seconds) : '',
+    };
+  }
+
   if (today && (today.weight.unreadable || today.reps.unreadable)) {
     return { mode: 'text', weightText: today.weightText, repsText: today.repsText };
   }
@@ -145,14 +185,46 @@ function toNumber(text) {
   return Number(text.replace(',', '.'));
 }
 
+// What a time field shows for the text typed into it, as { text, seconds,
+// invalid }. Only the digits count and leading zeros are dropped. The last two
+// digits are the seconds and the rest the minutes, so "4", "41" and "415" give
+// "0:04", "0:41" and "4:15". Seconds above 59 stay visible but are invalid, with
+// no `seconds`. No digits give an empty field, neither a time nor invalid.
+// Formatting its own result changes nothing, so an unchanged field stays valid
+// and deleting the last digit of "4:15" gives "0:41".
+export function formatTimeInput(input) {
+  const digits = String(input ?? '').replace(/\D/g, '').replace(/^0+/, '');
+  if (digits === '') return { text: '', seconds: null, invalid: false };
+  const padded = digits.padStart(3, '0');
+  const minutes = Number(padded.slice(0, -2));
+  const seconds = Number(padded.slice(-2));
+  const text = `${minutes}:${padded.slice(-2)}`;
+  if (seconds > 59) return { text, seconds: null, invalid: true };
+  return { text, seconds: minutes * 60 + seconds, invalid: false };
+}
+
 // The cells to write for an exercise's state: { ok: true, weightText,
 // repsText }, or { ok: false, invalid } with invalid = { weight, sets: [{
 // reps, ownWeight }] } flagging the fields to mark. Fields that hold no reps
 // are left out, and so are their own weights, which only come from prefill.
-// With no reps at all, both cells are empty: a weight alone is not saved.
+// With no reps at all, both cells are empty: a weight alone is not saved. In
+// 'timed' mode, invalid = { intensity, time }, the cells are the intensity and
+// the time as m:ss, and without a time both are empty.
 export function cellsFor(state) {
   if (state.mode === 'text') {
     return { ok: true, weightText: state.weightText, repsText: state.repsText };
+  }
+
+  if (state.mode === 'timed') {
+    const intensityInput = state.intensity.trim();
+    const time = formatTimeInput(state.time);
+    const invalid = {
+      intensity: intensityInput !== '' && !WHOLE_PATTERN.test(intensityInput),
+      time: time.invalid,
+    };
+    if (invalid.intensity || invalid.time) return { ok: false, invalid };
+    if (time.seconds === null) return { ok: true, weightText: '', repsText: '' };
+    return { ok: true, weightText: intensityInput, repsText: formatTime(time.seconds) };
   }
 
   const weightInput = state.weight.trim();
@@ -285,4 +357,22 @@ export function progressOf({ weightText, repsText }, last, assisted = false) {
     if (nowReps !== thenReps) return nowReps > thenReps ? 'improved' : 'done';
   }
   return 'done';
+}
+
+// 'none' | 'done' | 'improved' for a timed exercise's cells today, against its
+// `last` entry from buildToday. Done means a time in the time cell, readable or
+// not. Improved means a higher intensity, with an empty intensity as 0, or the
+// same intensity and a longer time. Nothing is compared when a cell is
+// unreadable today or last time.
+export function timedProgressOf({ weightText, repsText }, last) {
+  if (String(repsText ?? '').trim() === '') return 'none';
+  const intensity = parseIntensity(weightText);
+  const time = parseTime(repsText);
+  if (!last || intensity.unreadable || time.unreadable) return 'done';
+  if (last.intensity.unreadable || last.time.unreadable) return 'done';
+
+  const nowIntensity = intensity.value ?? 0;
+  const thenIntensity = last.intensity.value ?? 0;
+  if (nowIntensity !== thenIntensity) return nowIntensity > thenIntensity ? 'improved' : 'done';
+  return time.seconds > last.time.seconds ? 'improved' : 'done';
 }

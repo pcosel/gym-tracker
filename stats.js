@@ -7,6 +7,8 @@ import {
   hasCarryOverRow,
   parseWeight,
   parseReps,
+  parseIntensity,
+  parseTime,
   formatDate,
   dayNumber,
 } from './sheet-format.js';
@@ -34,13 +36,29 @@ function sessionOf(date, weight, reps) {
   };
 }
 
+// A session of a timed exercise: its two cells are an intensity and a time.
+function timedSessionOf(date, intensityText, timeText) {
+  const intensity = parseIntensity(intensityText);
+  const time = parseTime(timeText);
+  return {
+    date,
+    day: date ? dayNumber(date) : null,
+    intensity,
+    time,
+    readable: !intensity.unreadable && !time.unreadable,
+  };
+}
+
 // The tab, parsed once. Returns { workouts, exercises }. Each exercise is
-// { name, weightCol, repsCol, assisted, sessions, baseline }:
+// { name, weightCol, repsCol, timed, assisted, sessions, baseline }:
 // - `sessions` are the counted rows (dated from 1 January of today's year up to
 //   today, the carry-over row never) whose reps cell holds at least one set,
 //   readable or not, sorted by date; rows with the same date keep their order.
-//   A session is { date, day, weight, reps, readable }.
-// - `baseline` is the carry-over row's parsed cells, or null.
+//   A session is { date, day, weight, reps, readable }. For a timed exercise
+//   a row counts when its time cell is not empty, and a session is { date,
+//   day, intensity, time, readable }, readable when neither cell is unreadable.
+// - `baseline` is the carry-over row's parsed cells, or null. It is always null
+//   for a timed exercise, which never counts for the biggest gain.
 // `workouts` counts the counted rows in which any exercise has a session.
 export function historyOf(rows, today) {
   const cell = (row, col) => String((rows[row - 1] && rows[row - 1][col]) ?? '');
@@ -50,15 +68,17 @@ export function historyOf(rows, today) {
   const yearStart = dayNumber({ y: today.y, m: 1, d: 1 });
   const todayDay = dayNumber(today);
 
-  const exercises = header.map(({ name, weightCol, repsCol }) => ({
+  const exercises = header.map(({ name, weightCol, repsCol, timed }) => ({
     name,
     weightCol,
     repsCol,
+    timed,
     assisted: splitAssisted(name).assisted,
     sessions: [],
-    baseline: carryOver
-      ? sessionOf(null, parseWeight(cell(2, weightCol)), parseReps(cell(2, repsCol)))
-      : null,
+    baseline:
+      carryOver && !timed
+        ? sessionOf(null, parseWeight(cell(2, weightCol)), parseReps(cell(2, repsCol)))
+        : null,
   }));
 
   let workouts = 0;
@@ -69,6 +89,14 @@ export function historyOf(rows, today) {
     if (day < yearStart || day > todayDay) continue;
     let any = false;
     for (const exercise of exercises) {
+      if (exercise.timed) {
+        if (cell(row, exercise.repsCol).trim() === '') continue;
+        exercise.sessions.push(
+          timedSessionOf(date, cell(row, exercise.weightCol), cell(row, exercise.repsCol)),
+        );
+        any = true;
+        continue;
+      }
       const reps = parseReps(cell(row, exercise.repsCol));
       if (reps.sets.length === 0) continue;
       exercise.sessions.push(sessionOf(date, parseWeight(cell(row, exercise.weightCol)), reps));
@@ -179,15 +207,41 @@ export function lightestAssistance(session) {
 }
 
 // Over the sessions in the window: { count, readableCount, leftOut,
-// averageReps, averageWeight, points }. The averages are the mean of the
-// per-session values over the readable sessions, rounded to one decimal, and
-// null where there is nothing to average. `points` are { day, value } for the
-// graph, in date order.
+// averageReps, averageWeight, averageIntensity, averageTime, points }. The
+// averages are the mean of the per-session values over the readable sessions,
+// rounded to one decimal, and null where there is nothing to average. For a
+// timed exercise, averageReps and averageWeight are null, averageIntensity is
+// the mean over the readable sessions that have an intensity, and averageTime
+// is the mean seconds rounded to whole seconds; for every other exercise those
+// two are null. `points` are { day, value } for the graph, in date order: the
+// seconds of each readable session for a timed exercise.
 export function summaryOf(exercise, window) {
   const sessions = exercise.sessions.filter(
     (session) => session.day >= window.coveredFirstDay && session.day <= window.lastDay,
   );
   const readable = sessions.filter((session) => session.readable);
+  const counts = {
+    count: sessions.length,
+    readableCount: readable.length,
+    leftOut: sessions.length - readable.length,
+  };
+
+  if (exercise.timed) {
+    const withTime = readable.filter((session) => session.time.seconds !== null);
+    const intensities = withTime
+      .map((session) => session.intensity.value)
+      .filter((value) => value !== null);
+    const meanOf = (values) => values.reduce((sum, v) => sum + v, 0) / values.length;
+    return {
+      ...counts,
+      averageReps: null,
+      averageWeight: null,
+      averageIntensity: intensities.length === 0 ? null : round1(meanOf(intensities)),
+      averageTime:
+        withTime.length === 0 ? null : Math.round(meanOf(withTime.map((s) => s.time.seconds))),
+      points: withTime.map((session) => ({ day: session.day, value: session.time.seconds })),
+    };
+  }
 
   const totals = readable.map((session) => {
     let reps = 0;
@@ -209,29 +263,30 @@ export function summaryOf(exercise, window) {
   }
 
   return {
-    count: sessions.length,
-    readableCount: readable.length,
-    leftOut: sessions.length - readable.length,
+    ...counts,
     averageReps: mean(totals.map((t) => t.reps)),
     averageWeight: mean(totals.map((t) => t.weight).filter((w) => w !== null)),
+    averageIntensity: null,
+    averageTime: null,
     points,
   };
 }
 
 // The year so far: { workouts, sets, reps, mostDone, gain }.
-// - `sets` and `reps` count the readable sets of all sessions.
+// - `sets` and `reps` count the readable sets of all sessions, those of a timed
+//   exercise excepted: it adds none.
 // - `mostDone` is { names, sessions } with the names in alphabetical order, or
-//   null without any session.
+//   null without any session. A timed exercise counts.
 // - `gain` is { name, from, to, percent } for the exercise whose estimated 1RM
 //   grew most from its baseline (the carry-over row when it gives a value,
 //   else its first session that does) to its latest later session, or null
-//   without a positive gain. Assisted exercises never count.
+//   without a positive gain. Assisted and timed exercises never count.
 export function yearSoFar(history) {
   let sets = 0;
   let reps = 0;
   let most = 0;
   for (const exercise of history.exercises) {
-    for (const session of exercise.sessions) {
+    for (const session of exercise.timed ? [] : exercise.sessions) {
       for (const set of session.reps.sets) {
         if (set === null) continue;
         sets++;
@@ -253,7 +308,7 @@ export function yearSoFar(history) {
 
   let gain = null;
   for (const exercise of history.exercises) {
-    if (exercise.assisted) continue;
+    if (exercise.assisted || exercise.timed) continue;
     const valued = exercise.sessions.filter((session) => estimatedMax(session) !== null);
     let from = estimatedMax(exercise.baseline);
     let later = valued;

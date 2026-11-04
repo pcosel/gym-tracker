@@ -15,7 +15,7 @@ For a timed exercise, the detail SHALL show the average intensity and the averag
 - **THEN** the detail shows an intensity of 8 and a time of 4:00 per session
 
 #### Scenario: Rounding the time
-- **WHEN** the sessions of Ergometer in the window hold the times "3:30", "3:40" and "3:41"
+- **WHEN** the sessions of Ergometer in the window hold the times "3:40", "3:40" and "3:41"
 - **THEN** the detail shows a time of 3:40 per session
 
 #### Scenario: No intensity at all

@@ -4,16 +4,31 @@
 const DATE_PATTERN = /^(\d{1,2})\.(\d{1,2})\.(\d{4})$/;
 const WEIGHT_PATTERN = /^\d+(?:[.,]\d+)?$/;
 const SET_PATTERN = /^(\d+)(?:\s*@\s*(\d+(?:\.\d+)?))?$/;
+const INTENSITY_PATTERN = /^\d+$/;
+const TIME_PATTERN = /^(\d+):([0-5]\d)$/;
 
-// The exercises of row 1: each is a weight column followed by a reps column,
-// starting at column B. A pair with an empty name above the weight column is
-// not an exercise. Merged cells only keep their text in the first column, so
-// the reps column is always the weight column + 1.
+// Exercises whose column pair holds an intensity and a time, not a weight and
+// reps. Matched by the whole name, ignoring case.
+const TIMED_EXERCISES = ['Ergometer'];
+
+const nameKey = (name) => String(name ?? '').trim().normalize('NFC').toLowerCase();
+const TIMED_KEYS = new Set(TIMED_EXERCISES.map(nameKey));
+
+export function isTimed(name) {
+  return TIMED_KEYS.has(nameKey(name));
+}
+
+// The exercises of row 1: each is a column pair starting at column B. A pair
+// with an empty name above its first column is not an exercise. Merged cells
+// only keep their text in the first column, so the second column is always the
+// first + 1. For a weight-and-sets exercise the pair holds the weight (weightCol)
+// and the reps (repsCol). For a timed exercise (`timed: true`) it holds the
+// intensity (in weightCol) and the time (in repsCol).
 export function parseHeader(row1 = []) {
   const exercises = [];
   for (let col = 1; col < row1.length; col += 2) {
     const name = String(row1[col] ?? '').trim();
-    if (name) exercises.push({ name, weightCol: col, repsCol: col + 1 });
+    if (name) exercises.push({ name, weightCol: col, repsCol: col + 1, timed: isTimed(name) });
   }
   return exercises;
 }
@@ -92,6 +107,32 @@ export function parseReps(text) {
       return { reps: Number(match[1]), weight: match[2] === undefined ? null : Number(match[2]) };
     });
   return { sets, unreadable: sets.some((set) => set === null) };
+}
+
+// { value: number | null, unreadable: boolean }, for the intensity cell of a
+// timed exercise: one whole number. An empty cell has no value and is not
+// unreadable.
+export function parseIntensity(text) {
+  const trimmed = String(text ?? '').trim();
+  if (trimmed === '') return { value: null, unreadable: false };
+  if (!INTENSITY_PATTERN.test(trimmed)) return { value: null, unreadable: true };
+  return { value: Number(trimmed), unreadable: false };
+}
+
+// { seconds: number | null, unreadable: boolean }, for the time cell of a timed
+// exercise: minutes and seconds as `m:ss`. Leading zeros of the minutes are
+// allowed, because Sheets displays a hand-typed "3:30" as "03:30".
+export function parseTime(text) {
+  const trimmed = String(text ?? '').trim();
+  if (trimmed === '') return { seconds: null, unreadable: false };
+  const match = TIME_PATTERN.exec(trimmed);
+  if (!match) return { seconds: null, unreadable: true };
+  return { seconds: Number(match[1]) * 60 + Number(match[2]), unreadable: false };
+}
+
+// Seconds as `m:ss`, with no leading zero on the minutes: 210 -> "3:30".
+export function formatTime(seconds) {
+  return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
 }
 
 export function formatWeight(value) {

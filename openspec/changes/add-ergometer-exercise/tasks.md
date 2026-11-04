@@ -12,17 +12,19 @@ Groups 1–7 are implemented in the git worktree above, on branch `worktree-add-
 
 ## 1. Branch up to date
 
-- [ ] 1.1 In the worktree, check that the branch contains `main`'s head (`git merge-base --is-ancestor main HEAD`). If `main` has moved on, rebase the branch onto `main`. Verify that `npm test` passes before any change.
-- [ ] 1.2 On `localhost`, sign in and read the development sheet's year tab in the DevTools console, with `const { readTab } = await import('./api.js')` and `await readTab('2026')`. Record in this task:
+- [x] 1.1 In the worktree, check that the branch contains `main`'s head (`git merge-base --is-ancestor main HEAD`). If `main` has moved on, rebase the branch onto `main`. Verify that `npm test` passes before any change.
+- [x] 1.2 On `localhost`, sign in and read the development sheet's year tab in the DevTools console, with `const { readTab } = await import('./api.js')` and `await readTab('2026')`. Record in this task:
   - that AH1 reads exactly "Ergometer", and that the intensity is in AH and the time in AI;
   - two example time cells as displayed, such as "03:30";
   - whether any hand-typed time looks like 24 minutes or more, which Sheets would show wrapped (design.md, "Risks / Trade-offs").
+
+  Recorded 2026-11-04: AH1 reads exactly "Ergometer" (column index 33), intensity in AH and time in AI. The only filled Ergometer cells are in row 63 (03.11.2026): "7" and "03:30", which matches `m:ss` with a leading zero. No time of 24 minutes or more.
 
   If a displayed time does not match `m:ss` with an optional leading zero, stop and update the sheet-format spec and design.md before group 2.
 
 ## 2. Sheet notation
 
-- [ ] 2.1 In `sheet-format.js`, add the timed exercise list, `isTimed(name)`, and `timed` on each `parseHeader` entry, as in design.md ("`sheet-format.js` decides what a column pair means, by name"). Update the comment on `parseHeader` to say what the two columns hold for each kind. Keep the existing tests unchanged, and add tests to `tests/sheet-format.test.js`:
+- [x] 2.1 In `sheet-format.js`, add the timed exercise list, `isTimed(name)`, and `timed` on each `parseHeader` entry, as in design.md ("`sheet-format.js` decides what a column pair means, by name"). Update the comment on `parseHeader` to say what the two columns hold for each kind. Keep the existing tests unchanged, and add tests to `tests/sheet-format.test.js`:
   - "Ergometer in the header" and "Timed exercise": a header with "Ergometer" over AH:AI, column indices 33 and 34, gives `timed: true` with the intensity in AH and the time in AI;
   - "Different case": "ERGOMETER" is timed;
   - a name with surrounding spaces, " Ergometer ", is timed;
@@ -30,7 +32,7 @@ Groups 1–7 are implemented in the git worktree above, on branch `worktree-add-
   - every other exercise in the existing header tests has `timed: false`.
 
   Verify that `npm test` passes.
-- [ ] 2.2 In `sheet-format.js`, add `parseIntensity`, `parseTime` and `formatTime` as in design.md ("Notation: `parseIntensity`, `parseTime` and `formatTime`"). Add tests to `tests/sheet-format.test.js`:
+- [x] 2.2 In `sheet-format.js`, add `parseIntensity`, `parseTime` and `formatTime` as in design.md ("Notation: `parseIntensity`, `parseTime` and `formatTime`"). Add tests to `tests/sheet-format.test.js`:
   - "Intensities": "8", " 12" and "10 " give 8, 12 and 10;
   - "Minutes and seconds": "3:30", "12:05" and "0:45" give 210, 725 and 45 seconds;
   - "An hour or more": "75:00" gives 4500;
@@ -43,7 +45,7 @@ Groups 1–7 are implemented in the git worktree above, on branch `worktree-add-
   - `parseTime(formatTime(s)).seconds === s` for 0, 59, 60, 725 and 4500.
 
   Verify that `npm test` passes.
-- [ ] 2.3 Update `README.md` ("Sheet format"):
+- [x] 2.3 Update `README.md` ("Sheet format"):
   - Ergometer's column pair holds the intensity and the time, and only the exact name "Ergometer", ignoring case, makes it so;
   - the intensity cell is a whole number without a unit;
   - the time cell is `m:ss`. A hand-typed time shows as "03:30" and is read correctly. A time of 24 minutes or more must be logged with the app, or typed with a leading apostrophe ('45:00), because Sheets would wrap it;
@@ -53,7 +55,7 @@ Groups 1–7 are implemented in the git worktree above, on branch `worktree-add-
 
 ## 3. Today's workout model
 
-- [ ] 3.1 In `workout.js`, give `buildToday`'s exercises `timed`, and branch `read`, `hasEntry` and `hasReadable` on it, as in design.md ("`buildToday`: one entry shape per kind"). Update the comment above `buildToday`. Keep the existing tests unchanged. Add an Ergometer fixture to `tests/workout.test.js`, with its pair after the existing columns, and add tests:
+- [x] 3.1 In `workout.js`, give `buildToday`'s exercises `timed`, and branch `read`, `hasEntry` and `hasReadable` on it, as in design.md ("`buildToday`: one entry shape per kind"). Update the comment above `buildToday`. Keep the existing tests unchanged. Add an Ergometer fixture to `tests/workout.test.js`, with its pair after the existing columns, and add tests:
   - today's Ergometer entry holds `intensity` and `time` parsed from its cells;
   - "Timed exercise" (last time): with an intensity only in the lowest row, "20 min" in the row above it and "8" with "3:30" above that, `last` is the "3:30" row;
   - the carry-over row is Ergometer's last time when no workout row has a readable time;
@@ -62,7 +64,7 @@ Groups 1–7 are implemented in the git worktree above, on branch `worktree-add-
   - an unreadable time ("20 min") in the last workout counts as done in the last workout.
 
   Verify that `npm test` passes.
-- [ ] 3.2 In `workout.js`, add `formatTimeInput`, the `'timed'` mode of `initialState` and the timed branch of `cellsFor`, as in design.md ("Editor state: a third mode, `'timed'`"). Add tests to `tests/workout.test.js`:
+- [x] 3.2 In `workout.js`, add `formatTimeInput`, the `'timed'` mode of `initialState` and the timed branch of `cellsFor`, as in design.md ("Editor state: a third mode, `'timed'`"). Add tests to `tests/workout.test.js`:
   - `formatTimeInput`, as text and seconds:
     - "Minutes and seconds", "More than ten minutes", "Seconds only" and "Leading zero": "330", "1205", "45" and "0330" give "3:30", "12:05", "0:45" and "3:30", and 210, 725, 45 and 210;
     - "Time with a colon": "3:30" gives "3:30" and 210, so formatting is idempotent;
@@ -86,7 +88,7 @@ Groups 1–7 are implemented in the git worktree above, on branch `worktree-add-
     - "Ergometer first": with `creating`, `writesFor` writes the date and then the two cells at the intensity column.
 
   Verify that `npm test` passes.
-- [ ] 3.3 In `workout.js`, add `timedProgressOf` as in design.md ("'Improved': a separate `timedProgressOf`"). Add tests to `tests/workout.test.js`:
+- [x] 3.3 In `workout.js`, add `timedProgressOf` as in design.md ("'Improved': a separate `timedProgressOf`"). Add tests to `tests/workout.test.js`:
   - every scenario of "A timed exercise improves with more intensity, then more time": higher intensity with a shorter time, same intensity with a longer time, equal, lower intensity with a longer time, and without an intensity;
   - "Intensity only": `'none'`;
   - "Unreadable time today": `'done'`;
@@ -97,7 +99,7 @@ Groups 1–7 are implemented in the git worktree above, on branch `worktree-add-
 
 ## 4. The Ergometer editor
 
-- [ ] 4.1 In `today.js`, add `progressFor`, the timed branch of `buildExercise` with its formatting on every `input` event, the timed labels in text mode, and the timed fields in `markInvalid`. All of this follows design.md ("The time field: numeric keypad, formatted as the user types" and "'Improved': a separate `timedProgressOf`"). Verify on `localhost`, on a day without a row for today:
+- [x] 4.1 In `today.js`, add `progressFor`, the timed branch of `buildExercise` with its formatting on every `input` event, the timed labels in text mode, and the timed fields in `markInvalid`. All of this follows design.md ("The time field: numeric keypad, formatted as the user types" and "'Improved': a separate `timedProgressOf`"). Verify on `localhost`, on a day without a row for today:
   - "Opening Ergometer": the editor shows "Intensity" and "Time", both with `inputmode="numeric"`, and no "kg", set fields or "+ Set". It also shows the "History" link and the last-time line;
   - "Prefill from the last workout": the intensity and the time placeholder match Ergometer's last row in the development sheet;
   - "Typing a time": typing 4, 1 and 5 shows "0:04", "0:41" and "4:15" in the field, with the cursor at the end. There is no text next to the field. The Network tab shows no `values:batchUpdate` and the field is not marked until you leave it;
@@ -118,7 +120,7 @@ Groups 1–7 are implemented in the git worktree above, on branch `worktree-add-
   - in device mode at 360px, the two fields fit the editor's width;
   - Latzug's editor and tile behave as before;
   - the console shows no errors.
-- [ ] 4.2 Update `README.md` ("Workout screen"):
+- [x] 4.2 Update `README.md` ("Workout screen"):
   - "Prefill": Ergometer's intensity is prefilled from last time, and its time appears as a placeholder;
   - "Saving": Ergometer has an intensity field and one time field, the digits rule with the field formatting the time as you type, and that an intensity alone is never saved;
   - "Tiles": Ergometer is done with a time, and improved with a higher intensity, or the same intensity and a longer time.
@@ -127,18 +129,18 @@ Groups 1–7 are implemented in the git worktree above, on branch `worktree-add-
 
 ## 5. Ergometer icon
 
-- [ ] 5.1 Add the `'Ergometer'` entry to `ICONS` in `icons.js`, copied exactly from the appendix of design.md. In `tests/icons.test.js`:
+- [x] 5.1 Add the `'Ergometer'` entry to `ICONS` in `icons.js`, copied exactly from the appendix of design.md. In `tests/icons.test.js`:
   - add Ergometer to `NAMES` and rename the first test to the 17 names;
   - add "Ergometer": `iconFor('Ergometer')` and `iconFor('ERGOMETER')` return the entry;
   - check that the existing tests "Every icon is different" and "Every coordinate lies within the 24 x 24 grid" now cover it.
 
   In `tests/workout.test.js`, add that `tileLabels` with `iconFor` gives `null` for Ergometer. Verify that `npm test` passes. On `localhost`, check that Ergometer's tile shows the icon in all three states, and that the History list shows it next to Ergometer.
-- [ ] 5.2 Update `README.md` ("Tiles"): 17 exercises have an icon, with Ergometer in the list. Verify that the list matches the keys of `ICONS`.
+- [x] 5.2 Update `README.md` ("Tiles"): 17 exercises have an icon, with Ergometer in the list. Verify that the list matches the keys of `ICONS`.
 - [ ] 5.3 (Manual, user) On `localhost` at 360px width, with some tiles done and some improved, look at the tile grid next to `ergometer-icon.svg`. Confirm that Ergometer's icon looks as approved, especially next to Beinstrecker.
 
 ## 6. History
 
-- [ ] 6.1 In `stats.js`, give `historyOf`, `yearSoFar` and `summaryOf` their timed branches, as in design.md ("History: `timed` sessions, averages and a time graph"). Update their comments. Keep the existing tests unchanged, and add tests to `tests/stats.test.js`:
+- [x] 6.1 In `stats.js`, give `historyOf`, `yearSoFar` and `summaryOf` their timed branches, as in design.md ("History: `timed` sessions, averages and a time graph"). Update their comments. Keep the existing tests unchanged, and add tests to `tests/stats.test.js`:
   - "Ergometer" (session): a row with only "8" and "3:30" is a session of Ergometer and a workout;
   - "Ergometer intensity only": an intensity alone is no session and no workout;
   - "Ergometer" (year so far): 2 workouts, 2 sets and 20 reps;
@@ -154,7 +156,7 @@ Groups 1–7 are implemented in the git worktree above, on branch `worktree-add-
   - a weight-and-sets exercise gets `null` for both new fields.
 
   Verify that `npm test` passes.
-- [ ] 6.2 In `history.js`, show the timed averages and caption in `buildResults`, and give `buildGraph` the measure parameter, as in design.md. Add two or more Ergometer sessions in the window to the development sheet for this check, typed by hand, and remove them afterwards. Verify on `localhost`:
+- [x] 6.2 In `history.js`, show the timed averages and caption in `buildResults`, and give `buildGraph` the measure parameter, as in design.md. Add two or more Ergometer sessions in the window to the development sheet for this check, typed by hand, and remove them afterwards. Verify on `localhost`:
   - the exercise list shows Ergometer with its icon and when it was last done;
   - "Two sessions": Ergometer's detail shows "Intensity per session" and "Time per session" as `m:ss`, and no reps and no kg;
   - "Time per session": the graph is captioned "Time per session", and its value labels are `m:ss` without a unit;
@@ -162,7 +164,7 @@ Groups 1–7 are implemented in the git worktree above, on branch `worktree-add-
   - Latzug's detail still shows the estimated 1RM in kg, and Klimmzüge (assistiert) still shows the assistance with "lower is better";
   - the year so far counts Ergometer's workouts but no sets or reps from it;
   - the console shows no errors.
-- [ ] 6.3 Update `README.md` ("History"):
+- [x] 6.3 Update `README.md` ("History"):
   - Ergometer sessions count for workouts, last done and most done, but not for sets, reps or the biggest gain;
   - its detail shows the average intensity and the average time, and a graph of the time per session.
 
@@ -170,7 +172,7 @@ Groups 1–7 are implemented in the git worktree above, on branch `worktree-add-
 
 ## 7. Integration and merge
 
-- [ ] 7.1 Run `npm test` and `openspec validate add-ergometer-exercise --strict`. On `localhost`, do one complete pass on a day without a row for today in the development sheet:
+- [x] 7.1 Run `npm test` and `openspec validate add-ergometer-exercise --strict`. On `localhost`, do one complete pass on a day without a row for today in the development sheet:
   1. Log Latzug.
   2. Log Ergometer until its tile turns green.
   3. Open History and Ergometer's detail.

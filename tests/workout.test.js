@@ -2,13 +2,14 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   buildToday, initialState, cellsFor, writesFor, removeSet, tileLabels, progressOf, splitAssisted,
+  formatTimeInput, timedProgressOf,
 } from '../workout.js';
 import { iconFor } from '../icons.js';
 
 // All data below is made up. Columns: B/C Bankdrücken, D/E Latzug,
-// F/G Beinpresse, H/I Bizepsmaschine, J/K Duale Schulterpresse.
+// F/G Beinpresse, H/I Bizepsmaschine, J/K Duale Schulterpresse, L/M Ergometer.
 const HEADER = [
-  'Datum', 'Bankdrücken', '', 'Latzug', '', 'Beinpresse', '', 'Bizepsmaschine', '', 'Duale Schulterpresse', '',
+  'Datum', 'Bankdrücken', '', 'Latzug', '', 'Beinpresse', '', 'Bizepsmaschine', '', 'Duale Schulterpresse', '', 'Ergometer', '',
 ];
 
 function tab(...extraRows) {
@@ -554,4 +555,209 @@ test('Assisted: a name without the marker compares heaviest first', () => {
 test('Assisted: marker in another case', () => {
   const last = exerciseOf('20', '10', 'Dips (Assistiert)').last;
   assert.equal(progress('15', '8', last, true), 'improved');
+});
+
+// Ergometer's row: its intensity and time after the eleven other columns, in
+// the pair at L/M.
+const ergRow = (date, intensity, time) => [date, '', '', '', '', '', '', '', '', '', '', intensity, time];
+const ergModel = (...rows) => buildToday([HEADER, ...rows], TODAY);
+const ergometer = (...rows) => byName(ergModel(...rows), 'Ergometer');
+
+test("Ergometer: today's entry holds the intensity and the time", () => {
+  const entry = ergometer(ergRow('15.10.2026', '8', '3:30')).today;
+  assert.equal(ergometer().timed, true);
+  assert.equal(byName(buildToday(tab(), TODAY), 'Latzug').timed, false);
+  assert.equal(entry.intensity.value, 8);
+  assert.equal(entry.time.seconds, 210);
+  assert.equal(entry.weightText, '8');
+  assert.equal(entry.repsText, '3:30');
+});
+
+test('Timed exercise: last time is the nearest row with a readable time', () => {
+  const exercise = ergometer(
+    ergRow('01.09.2026', '8', '3:30'),
+    ergRow('08.09.2026', '', '20 min'),
+    ergRow('12.09.2026', '8', ''),
+  );
+  assert.equal(exercise.last.row, 2);
+  assert.equal(exercise.last.time.seconds, 210);
+});
+
+test('Timed exercise: the carry-over row is the last time when no workout row has a time', () => {
+  const exercise = ergometer(ergRow('2025', '7', '4:00'), ergRow('01.09.2026', '8', ''));
+  assert.equal(exercise.last.carryOver, true);
+  assert.equal(exercise.last.year, 2025);
+  assert.equal(exercise.last.time.seconds, 240);
+});
+
+test('Only Ergometer: a row with only an intensity and a time is the last workout', () => {
+  const model = ergModel(ergRow('01.09.2026', '8', '3:30'));
+  assert.equal(model.lastWorkoutRow, 2);
+  assert.equal(byName(model, 'Ergometer').doneLastWorkout, true);
+  assert.equal(byName(model, 'Latzug').doneLastWorkout, false);
+});
+
+test('Ergometer intensity only: not the last workout, and not done in it', () => {
+  const model = ergModel(ergRow('01.09.2026', '8', ''));
+  assert.equal(model.lastWorkoutRow, null);
+  assert.equal(byName(model, 'Ergometer').doneLastWorkout, false);
+});
+
+test('an unreadable Ergometer time in the last workout counts as done there', () => {
+  const model = ergModel(ergRow('01.09.2026', '8', '20 min'));
+  assert.equal(model.lastWorkoutRow, 2);
+  assert.equal(byName(model, 'Ergometer').doneLastWorkout, true);
+  assert.equal(byName(model, 'Ergometer').last, null);
+});
+
+const ergLast = (intensity, time) => ergometer(ergRow('01.09.2026', intensity, time));
+
+test('formatTimeInput: minutes and seconds, as text and seconds', () => {
+  const cases = [
+    ['330', '3:30', 210],
+    ['1205', '12:05', 725],
+    ['45', '0:45', 45],
+    ['0330', '3:30', 210],
+    ['3:30', '3:30', 210],
+  ];
+  for (const [input, text, seconds] of cases) {
+    assert.deepEqual(formatTimeInput(input), { text, seconds, invalid: false }, input);
+  }
+});
+
+test('formatTimeInput: typing a time one digit at a time', () => {
+  assert.equal(formatTimeInput('4').text, '0:04');
+  assert.equal(formatTimeInput('0:041').text, '0:41');
+  assert.equal(formatTimeInput('0:415').text, '4:15');
+  assert.equal(formatTimeInput('41').text, '0:41');
+  assert.equal(formatTimeInput('415').text, '4:15');
+});
+
+test('formatTimeInput: deleting digits', () => {
+  assert.equal(formatTimeInput('4:1').text, '0:41');
+  assert.equal(formatTimeInput('0:4').text, '0:04');
+  assert.equal(formatTimeInput('0:0').text, '');
+});
+
+test('formatTimeInput: changing a time', () => {
+  assert.equal(formatTimeInput('3:3').text, '0:33');
+  assert.equal(formatTimeInput('0:3').text, '0:03');
+  assert.equal(formatTimeInput('0:034').text, '0:34');
+  assert.equal(formatTimeInput('0:345').text, '3:45');
+});
+
+test('formatTimeInput: seconds above 59 are shown and invalid', () => {
+  assert.deepEqual(formatTimeInput('390'), { text: '3:90', seconds: null, invalid: true });
+});
+
+test('formatTimeInput: other characters are dropped', () => {
+  assert.equal(formatTimeInput('4a1').text, '0:41');
+  assert.equal(formatTimeInput('4:1:').text, '0:41');
+});
+
+test('formatTimeInput: no digits and zeros are neither a time nor invalid', () => {
+  for (const input of ['', '0', '00']) {
+    assert.deepEqual(formatTimeInput(input), { text: '', seconds: null, invalid: false }, input);
+  }
+});
+
+test('Ergometer prefill from the last workout: intensity copied, time as placeholder', () => {
+  const state = initialState(ergLast('8', '3:30'));
+  assert.deepEqual(state, { mode: 'timed', intensity: '8', time: '', placeholder: '3:30' });
+});
+
+test("Ergometer: today's values come first", () => {
+  const state = initialState(ergometer(ergRow('01.09.2026', '8', '3:30'), ergRow('15.10.2026', '9', '4:00')));
+  assert.deepEqual(state, { mode: 'timed', intensity: '9', time: '4:00', placeholder: '3:30' });
+});
+
+test('Ergometer never done: everything is empty', () => {
+  assert.deepEqual(initialState(ergometer()), { mode: 'timed', intensity: '', time: '', placeholder: '' });
+});
+
+test('Ergometer time with a unit today gives text mode', () => {
+  const state = initialState(ergometer(ergRow('15.10.2026', '8', '20 min')));
+  assert.deepEqual(state, { mode: 'text', weightText: '8', repsText: '20 min' });
+});
+
+const timedCells = (intensity, time) => cellsFor({ mode: 'timed', intensity, time, placeholder: '' });
+
+test('Logging Ergometer: the intensity and the time as m:ss', () => {
+  assert.deepEqual(timedCells('8', '330'), { ok: true, weightText: '8', repsText: '3:30' });
+});
+
+test('Ergometer without an intensity: only the time is written', () => {
+  assert.deepEqual(timedCells('', '330'), { ok: true, weightText: '', repsText: '3:30' });
+});
+
+test('Ergometer changing only the intensity, or clearing the time, empties both cells', () => {
+  assert.deepEqual(timedCells('9', ''), { ok: true, weightText: '', repsText: '' });
+  assert.deepEqual(timedCells('', ''), { ok: true, weightText: '', repsText: '' });
+});
+
+test('Ergometer decimal intensity is invalid', () => {
+  const result = timedCells('8.5', '330');
+  assert.equal(result.ok, false);
+  assert.deepEqual(result.invalid, { intensity: true, time: false });
+});
+
+test('Ergometer too many seconds is invalid', () => {
+  const result = timedCells('8', '390');
+  assert.equal(result.ok, false);
+  assert.deepEqual(result.invalid, { intensity: false, time: true });
+});
+
+test('Ergometer first: the date, then the two cells at the intensity column', () => {
+  const exercise = ergometer();
+  const cells = timedCells('8', '330');
+  assert.deepEqual(writesFor(exercise, cells, { row: 3, creating: true, today: TODAY }), [
+    { row: 3, col: 0, values: ['15.10.2026'] },
+    { row: 3, col: 11, values: ['8', '3:30'] },
+  ]);
+});
+
+const ergProgress = (lastIntensity, lastTime, intensity, time) =>
+  timedProgressOf({ weightText: intensity, repsText: time }, ergLast(lastIntensity, lastTime).last);
+
+test('Timed progress: more intensity improves, even with a shorter time', () => {
+  assert.equal(ergProgress('8', '3:30', '9', '3:00'), 'improved');
+});
+
+test('Timed progress: the same intensity and a longer time improves', () => {
+  assert.equal(ergProgress('8', '3:30', '8', '3:31'), 'improved');
+});
+
+test('Timed progress: equal to last time is only done', () => {
+  assert.equal(ergProgress('8', '3:30', '8', '3:30'), 'done');
+});
+
+test('Timed progress: less intensity with a longer time is only done', () => {
+  assert.equal(ergProgress('8', '3:30', '7', '9:00'), 'done');
+});
+
+test('Timed progress: without an intensity it counts as 0', () => {
+  assert.equal(ergProgress('8', '3:30', '', '9:00'), 'done');
+  assert.equal(ergProgress('', '3:30', '', '3:31'), 'improved');
+  assert.equal(ergProgress('', '3:30', '1', '0:10'), 'improved');
+});
+
+test('Timed progress: an intensity alone is none', () => {
+  assert.equal(ergProgress('8', '3:30', '9', ''), 'none');
+});
+
+test('Timed progress: an unreadable time today is done', () => {
+  assert.equal(ergProgress('8', '3:30', '9', '20 min'), 'done');
+});
+
+test('Timed progress: an unreadable intensity last time is not compared', () => {
+  const last = ergLast('8 (Stufe)', '3:30').last;
+  assert.equal(timedProgressOf({ weightText: '9', repsText: '4:00' }, last), 'done');
+});
+
+test('Timed progress: never done before is done', () => {
+  assert.equal(timedProgressOf({ weightText: '8', repsText: '3:30' }, null), 'done');
+});
+
+test('Tile labels: Ergometer has an icon and takes no label', () => {
+  assert.deepEqual(withIcons(['Ergometer']), [null]);
 });
