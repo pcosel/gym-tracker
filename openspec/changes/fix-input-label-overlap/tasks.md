@@ -72,7 +72,7 @@ Groups 1–3 are implemented in the git worktree above, on branch `worktree-fix-
 ## 3. Integration and merge
 
 - [x] 3.1 Run `npm test`. On `localhost`, do one complete pass: focus an exercise's weight field, a set's weight field, a set's reps field and the History Days field, each in turn. Verify that each shows the ring on its border, with no label covered. Also verify that the development sheet shows no changes beyond those already undone in 2.2, 2.5, 2.7 and 2.10.
-- [ ] 3.2 Commit all work in the worktree. From the main checkout, fast-forward `main` to the worktree branch (`git merge --ff-only worktree-fix-input-label-overlap`). Do not push. Verify that `git log main -1` matches the worktree branch head, and that `git status` on `main` is clean.
+- [x] 3.2 Commit all work in the worktree. From the main checkout, fast-forward `main` to the worktree branch (`git merge --ff-only worktree-fix-input-label-overlap`). Do not push. Verify that `git log main -1` matches the worktree branch head, and that `git status` on `main` is clean.
 - [ ] 3.3 (Manual, user) Push `main` to `origin`. Verify that the `pages-build-deployment` run for that commit succeeds, or that the deployed `styles.css` matches the commit.
 
 ## 4. Live verification
