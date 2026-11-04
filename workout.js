@@ -263,6 +263,27 @@ export function cellsFor(state) {
   };
 }
 
+// The fields to mark for an exercise's state: cellsFor's `invalid` flags, or
+// null when nothing is invalid. While the user types (`typing`), a weight that
+// is digits plus its decimal separator, such as "7,", counts as its digits: it
+// is on its way to "7,5" and is marked only once the field is left.
+export function invalidFields(state, { typing = false } = {}) {
+  const cells = cellsFor(typing ? withoutTrailingSeparators(state) : state);
+  return cells.ok ? null : cells.invalid;
+}
+
+const TRAILING_SEPARATOR_PATTERN = /^(\d+)[.,]$/;
+
+function withoutTrailingSeparators(state) {
+  if (state.mode !== 'sets') return state;
+  const spare = (text) => text.trim().replace(TRAILING_SEPARATOR_PATTERN, '$1');
+  return {
+    ...state,
+    weight: spare(state.weight),
+    sets: state.sets.map((set) => ({ ...set, ownWeight: spare(set.ownWeight) })),
+  };
+}
+
 // The state without the set field at `index`. `changed` tells whether the
 // cells change, which is only so when that field held reps: fields without
 // reps are not part of the cells.

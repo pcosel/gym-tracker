@@ -5,7 +5,7 @@ import * as auth from './auth.js';
 import { readTab, writeCells } from './api.js';
 import {
   buildToday, initialState, cellsFor, writesFor, removeSet, tileLabels, progressOf,
-  timedProgressOf, formatTimeInput,
+  timedProgressOf, formatTimeInput, invalidFields,
 } from './workout.js';
 import { iconFor } from './icons.js';
 import { formatDate, daysBetween } from './sheet-format.js';
@@ -191,13 +191,17 @@ function buildExercise(item) {
     });
     intensity.dataset.field = 'intensity';
     time.dataset.field = 'time';
-    intensity.addEventListener('input', () => { state.intensity = intensity.value; });
+    intensity.addEventListener('input', () => {
+      state.intensity = intensity.value;
+      markTyping(item);
+    });
     // The field shows the digits typed as m:ss, with the cursor kept at the end.
-    // Nothing is marked or saved until the field is left.
+    // The mark follows what it shows, but nothing is saved until it is left.
     time.addEventListener('input', () => {
       time.value = formatTimeInput(time.value).text;
       state.time = time.value;
       time.setSelectionRange(time.value.length, time.value.length);
+      markTyping(item);
     });
     intensity.addEventListener('change', () => onChange(item));
     time.addEventListener('change', () => onChange(item));
@@ -210,6 +214,7 @@ function buildExercise(item) {
   weight.addEventListener('input', () => {
     state.weight = weight.value;
     for (const input of own) input.placeholder = weight.value;
+    markTyping(item);
   });
   weight.addEventListener('change', () => onChange(item));
   const weightRow = labelled('Weight (kg)', weight);
@@ -244,8 +249,14 @@ function buildExercise(item) {
       placeholder: state.weight,
     });
     own.push(ownWeight);
-    reps.addEventListener('input', () => { set.reps = reps.value; });
-    ownWeight.addEventListener('input', () => { set.ownWeight = ownWeight.value; });
+    reps.addEventListener('input', () => {
+      set.reps = reps.value;
+      markTyping(item);
+    });
+    ownWeight.addEventListener('input', () => {
+      set.ownWeight = ownWeight.value;
+      markTyping(item);
+    });
     reps.addEventListener('change', () => onChange(item));
     ownWeight.addEventListener('change', () => onChange(item));
     reps.dataset.field = 'reps';
@@ -282,6 +293,7 @@ function rebuildExercise(item) {
   const element = buildExercise(item);
   item.element.replaceWith(element);
   item.element = element;
+  markInvalid(item, invalidFields(item.state));
 }
 
 const STATE_TEXT = {
@@ -369,6 +381,12 @@ function markInvalid(item, flags) {
   });
 }
 
+// While the user types, the marks follow the fields' content. Saving still
+// waits for the field to be left.
+function markTyping(item) {
+  markInvalid(item, invalidFields(item.state, { typing: true }));
+}
+
 function renderStatus() {
   const status = $('save-status');
   const retry = $('save-retry');
@@ -395,6 +413,8 @@ function renderStatus() {
 // ---- Saving ----
 
 function onChange(item) {
+  // A field left with "7," is marked now, not only once the save runs.
+  markInvalid(item, invalidFields(item.state));
   // The tile follows the cells the exercise would save. While a field is
   // invalid there are none, and the tile keeps its state.
   const cells = cellsFor(item.state);

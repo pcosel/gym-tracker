@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   buildToday, initialState, cellsFor, writesFor, removeSet, tileLabels, progressOf, splitAssisted,
-  formatTimeInput, timedProgressOf,
+  formatTimeInput, timedProgressOf, invalidFields,
 } from '../workout.js';
 import { iconFor } from '../icons.js';
 
@@ -317,6 +317,53 @@ test('an invalid weight or a decimal reps value is flagged', () => {
 test('text mode returns the entered text unchanged', () => {
   const result = cellsFor({ mode: 'text', weightText: '25 (Seil)', repsText: '8, 9, 7 ' });
   assert.deepEqual(result, { ok: true, weightText: '25 (Seil)', repsText: '8, 9, 7 ' });
+});
+
+const setsState = (weight, ...fields) => ({ mode: 'sets', weight, sets: sets(...fields) });
+
+test('invalidFields: nothing to mark gives null', () => {
+  assert.equal(invalidFields(setsState('75', ['10'], [''])), null);
+  assert.equal(invalidFields(setsState('75', ['10'], ['']), { typing: true }), null);
+});
+
+test('invalidFields: the same flags as cellsFor', () => {
+  const state = setsState('75', ['abc'], ['10']);
+  assert.deepEqual(invalidFields(state), cellsFor(state).invalid);
+  assert.deepEqual(invalidFields(state, { typing: true }), cellsFor(state).invalid);
+});
+
+test('Weight on its way to a decimal: a trailing separator is spared while typing', () => {
+  for (const weight of ['7,', '7.']) {
+    assert.equal(invalidFields(setsState(weight, ['10']), { typing: true }), null);
+    assert.equal(invalidFields(setsState(weight, ['10'])).weight, true);
+  }
+});
+
+test('A set weight on its way to a decimal is spared while typing too', () => {
+  for (const own of ['12,', '12.']) {
+    assert.equal(invalidFields(setsState('75', ['10', own]), { typing: true }), null);
+    assert.equal(invalidFields(setsState('75', ['10', own])).sets[0].ownWeight, true);
+  }
+});
+
+test('Other invalid weights are flagged while typing', () => {
+  for (const weight of ['abc', '7,5,', ',5', '7,,']) {
+    assert.equal(invalidFields(setsState(weight, ['10']), { typing: true }).weight, true, weight);
+  }
+});
+
+test('Reps are never spared while typing', () => {
+  assert.equal(invalidFields(setsState('75', ['10,']), { typing: true }).sets[0].reps, true);
+});
+
+test('Ergometer too many seconds is flagged while typing', () => {
+  const state = { mode: 'timed', intensity: '8', time: '3:90', placeholder: '' };
+  assert.deepEqual(invalidFields(state, { typing: true }), { intensity: false, time: true });
+  assert.equal(invalidFields({ ...state, time: '39:05' }, { typing: true }), null);
+});
+
+test('invalidFields: text mode never marks', () => {
+  assert.equal(invalidFields({ mode: 'text', weightText: 'abc', repsText: '?' }, { typing: true }), null);
 });
 
 const latzug = () => byName(buildToday(tab(), TODAY), 'Latzug');

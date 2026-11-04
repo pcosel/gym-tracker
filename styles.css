@@ -85,9 +85,12 @@ input[type="text"] {
   border: 1px solid var(--border);
   border-radius: 0.5rem;
 }
-input[aria-invalid="true"] { border: 2px solid var(--danger); background: #fdecea; }
+input[aria-invalid="true"] { border-color: var(--danger); background: #fdecea; }
 
 :focus-visible { outline: 3px solid var(--done); outline-offset: 2px; }
+/* A field's ring lies on its border, inside its box, so it never covers the label above. */
+input[type="text"]:focus-visible { outline-offset: -3px; }
+input[aria-invalid="true"]:focus-visible { outline-color: var(--danger); }
 
 /* Summary line */
 #summary {

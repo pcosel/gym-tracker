@@ -187,19 +187,24 @@ function buildDetail(exercise, today) {
   field.inputMode = 'numeric';
   field.autocomplete = 'off';
   field.value = isCustom(windowChoice) ? String(windowChoice.days) : '';
-  field.addEventListener('change', () => {
+  // The typed days: null for an empty field, NaN for anything but a whole
+  // number of at least 1.
+  const typedDays = () => {
     const text = field.value.trim();
-    if (text === '') {
-      field.removeAttribute('aria-invalid');
-      return;
-    }
+    if (text === '') return null;
     const days = Number(text);
-    if (/^\d+$/.test(text) && Number.isSafeInteger(days) && days >= 1) {
-      field.removeAttribute('aria-invalid');
-      apply({ days });
-    } else {
-      field.setAttribute('aria-invalid', 'true');
-    }
+    return /^\d+$/.test(text) && Number.isSafeInteger(days) && days >= 1 ? days : NaN;
+  };
+  const mark = (days) => {
+    if (Number.isNaN(days)) field.setAttribute('aria-invalid', 'true');
+    else field.removeAttribute('aria-invalid');
+  };
+  // The mark follows the typing; the window changes only once the field is left.
+  field.addEventListener('input', () => mark(typedDays()));
+  field.addEventListener('change', () => {
+    const days = typedDays();
+    mark(days);
+    if (days !== null && !Number.isNaN(days)) apply({ days });
   });
   const label = el('label');
   label.append(el('span', 'Days'), field);

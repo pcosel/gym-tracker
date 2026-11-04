@@ -34,12 +34,12 @@ The time field SHALL read its digits with the last two as seconds and any before
 - **THEN** the time stays 3 minutes 30 seconds
 
 ### Requirement: The time field formats the time while the user types
-After every change the user makes to the time field, the field SHALL show its digits as a time: minutes, a colon and two digits of seconds, with the cursor at the end. There SHALL be no separate display of the time. Typing SHALL NOT mark the field as invalid or save anything. Both happen only when the user leaves the field.
+After every change the user makes to the time field, the field SHALL show its digits as a time: minutes, a colon and two digits of seconds, with the cursor at the end. There SHALL be no separate display of the time. Typing SHALL NOT save anything. Saving happens only when the user leaves the field.
 
 #### Scenario: Typing a time
 - **WHEN** the user types "4", "1" and "5" into Ergometer's empty time field, one after another
 - **THEN** the field shows "0:04", then "0:41", then "4:15"
-- **AND** nothing is marked as invalid and nothing is saved until the user leaves the field
+- **AND** nothing is saved until the user leaves the field
 
 #### Scenario: Deleting digits
 - **WHEN** the time field shows "4:15" and the user deletes three times
@@ -52,7 +52,7 @@ After every change the user makes to the time field, the field SHALL show its di
 #### Scenario: Seconds above 59 while typing
 - **WHEN** the user types "3", "9" and "0" into the empty time field
 - **THEN** the field shows "0:03", "0:39" and then "3:90"
-- **AND** the field is marked as invalid only once the user leaves it
+- **AND** the field is marked as invalid as soon as it shows "3:90", before the user leaves it
 
 #### Scenario: Other characters
 - **WHEN** the user types a letter or a colon into the time field on a full keyboard
