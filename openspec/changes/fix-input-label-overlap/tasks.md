@@ -73,14 +73,16 @@ Groups 1–3 are implemented in the git worktree above, on branch `worktree-fix-
 
 - [x] 3.1 Run `npm test`. On `localhost`, do one complete pass: focus an exercise's weight field, a set's weight field, a set's reps field and the History Days field, each in turn. Verify that each shows the ring on its border, with no label covered. Also verify that the development sheet shows no changes beyond those already undone in 2.2, 2.5, 2.7 and 2.10.
 - [x] 3.2 Commit all work in the worktree. From the main checkout, fast-forward `main` to the worktree branch (`git merge --ff-only worktree-fix-input-label-overlap`). Do not push. Verify that `git log main -1` matches the worktree branch head, and that `git status` on `main` is clean.
-- [ ] 3.3 (Manual, user) Push `main` to `origin`. Verify that the `pages-build-deployment` run for that commit succeeds, or that the deployed `styles.css` matches the commit.
+- [x] 3.3 (Manual, user) Push `main` to `origin`. Verify that the `pages-build-deployment` run for that commit succeeds, or that the deployed `styles.css` matches the commit.
 
 ## 4. Live verification
 
 These checks run against the deployed site after 3.3, so they are checked off in a follow-up commit.
 
-- [ ] 4.1 Read-only check on a desktop browser at `https://pcosel.github.io/gym-tracker/`. Sign in, open an exercise, tap its weight field without typing and then tap outside it. Verify that the ring lies on the field's border, that the Network tab shows no `values:batchUpdate`, and that the console shows no errors from this app's code.
-- [ ] 4.2 (Manual, user) On the phone, open the deployed site and tap a weight field and a set field. Record in this task whether the ring lies on the border with rounded corners and leaves the label readable.
+- [x] 4.1 Read-only check on a desktop browser at `https://pcosel.github.io/gym-tracker/`. Sign in, open an exercise, tap its weight field without typing and then tap outside it. Verify that the ring lies on the field's border, that the Network tab shows no `values:batchUpdate`, and that the console shows no errors from this app's code.
+  - Result (04.11.2026, 1280px wide, real sheet): Latzug's weight field showed the ring on its border with "Weight (kg)" fully visible, and kept its box. Tapping outside removed the ring and left "75". No `values:batchUpdate` was sent. The console showed only the missing `favicon.ico` and Google sign-in messages. The deployed `styles.css`, `today.js`, `workout.js` and `history.js` match `c4e1ce3`.
+- [x] 4.2 (Manual, user) On the phone, open the deployed site and tap a weight field and a set field. Record in this task whether the ring lies on the border with rounded corners and leaves the label readable.
+  - Result (05.11.2026, phone): confirmed by the user, it looks good.
 
 ## Workflow follow-up
 
