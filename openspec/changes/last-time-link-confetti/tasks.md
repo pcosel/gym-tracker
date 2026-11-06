@@ -116,12 +116,21 @@ Groups 1–5 are implemented in the git worktree above, on branch `worktree-last
 These checks run against the deployed site after 5.3, so they are checked off in a follow-up commit.
 
 - [x] 6.1 Read-only check on a desktop browser at `https://pcosel.github.io/gym-tracker/`. Sign in and open a few tiles without typing. Check that each last-time date matches the real sheet, and that its day count matches the calendar. Select the title and check that it opens the real sheet on this year's tab, in a new browser tab. Verify that the Network tab shows no `values:batchUpdate` and that the console shows no errors from this app's code.
-- [ ] 6.2 (Manual, user) At the next workout, log it with the app on the phone. Record in this task:
+
+  Result (desktop Playwright browser, 06.11.2026): six tiles opened without typing showed 02.11.2026 (4 days ago) for Bankdrücken, Bauchmaschine and Bizepsmaschine, 05.11.2026 (1 day ago) for Rückenheben and Schulterpresse, and 19.10.2026 (18 days ago) for Seitheber. All day counts match the calendar. The title link opened a new browser tab on `Fitti_Copy` at the 2026 tab (`gid=115733138`). The network log holds only the probe, the `values/'2026'` read and `userinfo`, with no `values:batchUpdate`. The console errors came from the missing `favicon.ico` and Google's sign-in script (Cross-Origin-Opener-Policy), none from this app's code. The dates were read from the app, not compared cell by cell against the sheet.
+- [x] 6.2 (Manual, user) At the next workout, log it with the app on the phone. Record in this task:
   - whether confetti showed above the keyboard when a tile turned green while typing, and ran smoothly;
   - whether, when going straight from the last set to the next exercise's tile, the confetti clearly came from the exercise that improved;
   - whether the phone vibrated at the same moment, and whether its length felt right. If not, note the change to `VIBRATION` for a follow-up commit;
   - whether the title link opened the sheet on this year's tab, in the Sheets app or the browser;
   - whether the last-time date and its day count were useful at a glance.
+
+  Result (first workout on the deployed site, on the phone):
+
+  - Confetti looked good and ran smoothly. With the exercise tile on screen it came in from the sides, and with the page scrolled further up it came out of the exercise's tile;
+  - the phone vibrated at the right moment and the length felt good, so `VIBRATION` stays as it is;
+  - the title link opened the sheet, which the user used to delete a test row from that workout;
+  - the last-time date and its day count were useful at a glance.
 
 ## Workflow follow-up
 
