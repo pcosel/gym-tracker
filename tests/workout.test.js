@@ -733,6 +733,12 @@ test('Logging Ergometer: the intensity and the time as m:ss', () => {
   assert.deepEqual(timedCells('8', '330'), { ok: true, weightText: '8', repsText: '3:30' });
 });
 
+test('Ergometer intensity is written without leading zeros', () => {
+  assert.deepEqual(timedCells('08', '330'), { ok: true, weightText: '8', repsText: '3:30' });
+  assert.deepEqual(timedCells(' 012 ', '330'), { ok: true, weightText: '12', repsText: '3:30' });
+  assert.deepEqual(timedCells('00', '330'), { ok: true, weightText: '0', repsText: '3:30' });
+});
+
 test('Ergometer without an intensity: only the time is written', () => {
   assert.deepEqual(timedCells('', '330'), { ok: true, weightText: '', repsText: '3:30' });
 });

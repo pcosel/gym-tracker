@@ -224,7 +224,8 @@ export function cellsFor(state) {
     };
     if (invalid.intensity || invalid.time) return { ok: false, invalid };
     if (time.seconds === null) return { ok: true, weightText: '', repsText: '' };
-    return { ok: true, weightText: intensityInput, repsText: formatTime(time.seconds) };
+    const intensity = intensityInput === '' ? '' : String(Number(intensityInput));
+    return { ok: true, weightText: intensity, repsText: formatTime(time.seconds) };
   }
 
   const weightInput = state.weight.trim();
