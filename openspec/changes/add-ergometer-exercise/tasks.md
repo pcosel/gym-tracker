@@ -189,17 +189,20 @@ Groups 1–7 are implemented in the git worktree above, on branch `worktree-add-
 
 These checks run against the deployed site after 7.3, so they are checked off in a follow-up commit.
 
-- [ ] 8.1 Read-only check on a desktop browser at `https://pcosel.github.io/gym-tracker/`. Sign in and check that:
+- [x] 8.1 Read-only check on a desktop browser at `https://pcosel.github.io/gym-tracker/`. Sign in and check that:
   - Ergometer's tile shows the icon;
   - opening it without typing shows the intensity and time placeholder from the real sheet's last Ergometer row;
   - its History detail shows the intensity and time averages.
 
   Verify that the Network tab shows no `values:batchUpdate`, and that the console shows no errors from this app's code.
   Checked 04.11.2026 after the deploy: the icon shows on the tile and in the History list, no `values:batchUpdate` went out, and the console showed only Google sign-in and favicon errors. The real sheet has no Ergometer row yet ("not done this year", no last-time line), so the placeholder and the averages stay open until the first real Ergometer row exists.
-- [ ] 8.2 (Manual, user) At the next workout, log Ergometer with the app on the phone. Record in this task:
+  Re-checked 06.11.2026 after the first real Ergometer row (05.11.2026) existed, signed in on desktop: the tile shows the icon; opening Ergometer without typing shows "Last time: 05.11.2026 (1 day ago)", intensity 7 as a value and time 2:00 as a placeholder, as the spec says; the History detail shows "Intensity per session 7" and "Time per session 2:00". Only GET requests to the Sheets API went out (no `values:batchUpdate`), and the console showed only the favicon 404 and Google sign-in Cross-Origin-Opener-Policy errors.
+- [x] 8.2 (Manual, user) At the next workout, log Ergometer with the app on the phone. Record in this task:
   - whether typing the time as digits, with the field formatting it as you type, was quick and clear, and whether correcting a time with the delete key worked as expected;
   - whether the icon was recognisable at a glance;
   - whether the tile turned green when expected.
+
+  Checked 05.11.2026 at the workout, on the phone: typing the time as digits worked as intended, the icon was recognisable, and the tile turned green when expected (with confetti and vibration).
 
 ## Workflow follow-up
 
