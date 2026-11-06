@@ -53,7 +53,7 @@ Today's row SHALL be the workout row whose date is today. If several rows have t
 - **AND** saves write to row 14
 
 ### Requirement: Each exercise has a weight and set fields
-Each exercise SHALL show one weight field and a list of set fields. Each set field SHALL have a weight of its own, which defaults to the exercise weight, on the left, and a reps value on the right, as in the sheet's notation. The list SHALL have at least three fields, and at least as many as last time's sets and as today's saved sets. The user SHALL be able to add more set fields and to delete any set field.
+Each exercise other than a timed exercise SHALL show one weight field and a list of set fields. Each set field SHALL have a weight of its own, which defaults to the exercise weight, on the left, and a reps value on the right, as in the sheet's notation. The list SHALL have at least three fields, and at least as many as last time's sets and as today's saved sets. The user SHALL be able to add more set fields and to delete any set field.
 
 #### Scenario: Three fields by default
 - **WHEN** an exercise was last done with two sets and has no sets today
@@ -75,8 +75,64 @@ Each exercise SHALL show one weight field and a list of set fields. Each set fie
 - **WHEN** the reps cell holds "10, 9, 8" and the user deletes the second set field
 - **THEN** the reps cell holds "10, 8"
 
+### Requirement: A timed exercise has an intensity field and a time field
+A timed exercise SHALL show an intensity field and one time field instead of a weight field and set fields. Neither field SHALL show a unit, and both SHALL bring up the numeric keypad on a phone. A timed exercise SHALL have no set fields and no way to add one.
+
+#### Scenario: Opening Ergometer
+- **WHEN** the user selects the tile of Ergometer
+- **THEN** its editor shows a field "Intensity" and a field "Time"
+- **AND** it shows no "kg", no set fields and no "+ Set"
+
+### Requirement: Typed digits are read as minutes and seconds
+The time field SHALL read its digits with the last two as seconds and any before them as minutes, so one or two digits are seconds only. Leading zeros and any character that is not a digit SHALL be ignored.
+
+#### Scenario: Minutes and seconds
+- **WHEN** the user types "330" into Ergometer's time field
+- **THEN** the field shows "3:30"
+
+#### Scenario: More than ten minutes
+- **WHEN** the user types "1205" into the time field
+- **THEN** the field shows "12:05"
+
+#### Scenario: Seconds only
+- **WHEN** the user types "45" into the time field
+- **THEN** the field shows "0:45"
+
+#### Scenario: Leading zero
+- **WHEN** the user types "0330" into the time field
+- **THEN** the field shows "3:30"
+
+#### Scenario: Time with a colon
+- **WHEN** the time field shows "3:30" and the user leaves it unchanged
+- **THEN** the time stays 3 minutes 30 seconds
+
+### Requirement: The time field formats the time while the user types
+After every change the user makes to the time field, the field SHALL show its digits as a time: minutes, a colon and two digits of seconds, with the cursor at the end. There SHALL be no separate display of the time. Typing SHALL NOT save anything. Saving happens only when the user leaves the field.
+
+#### Scenario: Typing a time
+- **WHEN** the user types "4", "1" and "5" into Ergometer's empty time field, one after another
+- **THEN** the field shows "0:04", then "0:41", then "4:15"
+- **AND** nothing is saved until the user leaves the field
+
+#### Scenario: Deleting digits
+- **WHEN** the time field shows "4:15" and the user deletes three times
+- **THEN** the field shows "0:41", then "0:04", and then is empty
+
+#### Scenario: Changing a time
+- **WHEN** the time field shows "3:30" from today's row, and the user deletes twice and then types "4" and "5"
+- **THEN** the field shows "0:33", "0:03", "0:34" and finally "3:45"
+
+#### Scenario: Seconds above 59 while typing
+- **WHEN** the user types "3", "9" and "0" into the empty time field
+- **THEN** the field shows "0:03", "0:39" and then "3:90"
+- **AND** the field is marked as invalid as soon as it shows "3:90", before the user leaves it
+
+#### Scenario: Other characters
+- **WHEN** the user types a letter or a colon into the time field on a full keyboard
+- **THEN** the field stays as it was
+
 ### Requirement: "Last time" is the most recent earlier record
-For each exercise, "last time" SHALL be the lowest workout row above today's row whose reps cell for that exercise holds at least one readable set. With no today's row, all workout rows count. If no workout row qualifies, "last time" SHALL be the carry-over row, provided its reps cell for that exercise holds a readable set.
+For each exercise, "last time" SHALL be the lowest workout row above today's row whose reps cell for that exercise holds at least one readable set. For a timed exercise, it SHALL be the lowest such row whose time cell holds a readable time. With no today's row, all workout rows count. If no workout row qualifies, "last time" SHALL be the carry-over row, provided its reps cell for that exercise holds a readable set, or for a timed exercise its time cell a readable time.
 
 #### Scenario: Weight without reps is skipped
 - **WHEN** Bizepsmaschine has a weight but no reps in row 13, and "40" with "9, 6, 6" in row 9, and nothing in between
@@ -89,6 +145,10 @@ For each exercise, "last time" SHALL be the lowest workout row above today's row
 #### Scenario: Never done
 - **WHEN** neither a workout row nor the carry-over row holds reps for Duale Schulterpresse
 - **THEN** Duale Schulterpresse has no last time, and its weight field and set fields start empty
+
+#### Scenario: Timed exercise
+- **WHEN** Ergometer has an intensity but no time in row 13, "20 min" as its time in row 12, and "8" with "3:30" in row 9
+- **THEN** last time for Ergometer is row 9, because row 13 holds no time and the time in row 12 is unreadable
 
 ### Requirement: Fields are prefilled from the last time
 If today's row has no weight for an exercise, the weight field SHALL hold last time's weight. A set field without saved reps today SHALL show last time's reps at the same position as a placeholder. It SHALL take last time's weight for that position as its own when that set had an `@` weight. Prefilled values SHALL NOT be saved on their own.
@@ -109,6 +169,21 @@ If today's row has no weight for an exercise, the weight field SHALL hold last t
 #### Scenario: Unreadable entry last time
 - **WHEN** an exercise last held "?, 9, 7" as reps
 - **THEN** the first set field shows no placeholder, and the second and third show 9 and 7
+
+### Requirement: A timed exercise is prefilled from the last time
+If today's row has no intensity for a timed exercise, the intensity field SHALL hold last time's intensity. If today's row has no time for it, the time field SHALL show last time's time as a placeholder. Prefilled values SHALL NOT be saved on their own.
+
+#### Scenario: Prefill from the last workout
+- **WHEN** there is no today's row and Ergometer last held "8" and "3:30"
+- **THEN** its intensity field holds 8, and its time field is empty and shows 3:30 as a placeholder
+
+#### Scenario: Today's values come first
+- **WHEN** today's row holds "9" and "4:00" for Ergometer, and Ergometer last held "8" and "3:30"
+- **THEN** its intensity field holds 9 and its time field holds 4:00
+
+#### Scenario: Never done
+- **WHEN** neither a workout row nor the carry-over row holds a readable time for Ergometer
+- **THEN** its intensity field and time field start empty, with no placeholder
 
 ### Requirement: Each change is saved when the field is left
 When the user leaves a weight field or set field after changing it, the app SHALL save that exercise. It SHALL write the exercise's weight cell and reps cell in today's row, in the notation described in the sheet-format capability. Only set fields that hold reps SHALL be included. An exercise without any reps SHALL leave both cells empty, even when it has a weight.
@@ -141,6 +216,25 @@ When the user leaves a weight field or set field after changing it, the app SHAL
 - **WHEN** the user adds an exercise and changes nothing
 - **THEN** nothing is written to the sheet
 
+### Requirement: A timed exercise saves its intensity and time
+When the user leaves the intensity field or the time field of a timed exercise after changing it, the app SHALL save that exercise. It SHALL write its intensity cell and time cell in today's row, in the notation described in the sheet-format capability. Without a time, both cells SHALL be left empty, even with an intensity.
+
+#### Scenario: Logging Ergometer
+- **WHEN** Ergometer's intensity field holds 8 and the user types "330" into its time field and leaves it
+- **THEN** Ergometer's intensity cell in today's row holds "8" and its time cell holds "3:30"
+
+#### Scenario: Without an intensity
+- **WHEN** Ergometer's intensity field is empty and the user types "330" into its time field and leaves it
+- **THEN** its intensity cell is empty and its time cell holds "3:30"
+
+#### Scenario: Changing only the intensity
+- **WHEN** the user changes Ergometer's intensity to 9 before entering a time and leaves the field
+- **THEN** nothing is saved for Ergometer: its intensity cell and time cell stay empty
+
+#### Scenario: Clearing the time
+- **WHEN** Ergometer was saved with "8" and "3:30", and the user empties its time field and leaves it
+- **THEN** both of its cells in today's row are emptied
+
 ### Requirement: The exercise weight applies to sets without their own weight
 Changing the exercise weight SHALL change the weight of every set that has no weight of its own, just as editing the weight cell in the sheet does. Sets with their own weight SHALL keep it. A set whose own weight equals the exercise weight SHALL be saved without `@`.
 
@@ -153,12 +247,16 @@ Changing the exercise weight SHALL change the weight of every set that has no we
 - **THEN** that set is saved without `@`
 
 ### Requirement: Today's row is created with the first save
-If there is no today's row, the first save that writes a weight or reps SHALL create it in the first row below every row that holds any value. That save SHALL write today's date into column A together with the exercise's cells. Later saves SHALL use the same row. A save with nothing to write SHALL NOT create the row.
+If there is no today's row, the first save that writes any cell of an exercise SHALL create it in the first row below every row that holds any value. That save SHALL write today's date into column A together with the exercise's cells. Later saves SHALL use the same row. A save with nothing to write SHALL NOT create the row.
 
 #### Scenario: First save of the day
 - **WHEN** the lowest row holding any value is row 13 and the user saves the first set of Latzug on 15.10.2026
 - **THEN** A14 holds "15.10.2026", Z14 holds "75" and AA14 holds "10"
 - **AND** later saves on that screen write to row 14
+
+#### Scenario: Ergometer first
+- **WHEN** the lowest row holding any value is row 13 and the user logs Ergometer with "8" and "330" on 15.10.2026, before any other exercise
+- **THEN** A14 holds "15.10.2026", and Ergometer's intensity and time cells in row 14 hold "8" and "3:30"
 
 #### Scenario: Opening the app without training
 - **WHEN** the user opens the workout screen and enters nothing
@@ -193,12 +291,17 @@ When the user makes changes while an earlier save is still in progress, the shee
 - **THEN** the reps cell finally holds "10, 9"
 
 ### Requirement: Unreadable cells are edited as text
-If today's weight cell or reps cell for an exercise is unreadable, the exercise SHALL show two text fields that hold the cells' text as displayed, with no set fields and no prefill. Saving SHALL write exactly the entered text.
+If today's weight cell or reps cell for an exercise is unreadable, or today's intensity cell or time cell for a timed exercise, the exercise SHALL show two text fields that hold the cells' text as displayed, with no set fields and no prefill. Saving SHALL write exactly the entered text.
 
 #### Scenario: Reps with a question mark
 - **WHEN** today's reps cell for an exercise displays "?, 9, 7"
 - **THEN** the exercise shows a text field holding "?, 9, 7"
 - **AND** after the user changes it to "8, 9, 7" and leaves the field, the cell holds "8, 9, 7"
+
+#### Scenario: Time with a unit
+- **WHEN** today's cells for Ergometer display "8" and "20 min"
+- **THEN** Ergometer shows a text field "Intensity" holding "8" and a text field "Time" holding "20 min"
+- **AND** after the user changes the time to "20:00" and leaves the field, the time cell holds "20:00"
 
 ### Requirement: Invalid input is not saved
 A weight field SHALL accept a non-negative number with a dot or a comma as decimal separator. A set field SHALL accept a whole number of reps. Any other input SHALL be marked as invalid, and the exercise SHALL NOT be saved until it is corrected.
@@ -210,6 +313,22 @@ A weight field SHALL accept a non-negative number with a dot or a comma as decim
 #### Scenario: Not a number
 - **WHEN** the user enters "abc" in a set field and leaves it
 - **THEN** the field is marked as invalid and nothing is written for that exercise
+
+### Requirement: Invalid timed input is not saved
+The intensity field SHALL accept a whole number. The time field SHALL accept a time whose seconds are at most 59. Any other input SHALL be marked as invalid, and the exercise SHALL NOT be saved until it is corrected.
+
+#### Scenario: Decimal intensity
+- **WHEN** the user enters "8.5" as Ergometer's intensity and leaves the field
+- **THEN** the field is marked as invalid and nothing is written for Ergometer
+
+#### Scenario: Too many seconds
+- **WHEN** the user types "390" into Ergometer's time field
+- **THEN** the field shows "3:90"
+- **AND** after the user leaves the field, it is marked as invalid and nothing is written for Ergometer
+
+#### Scenario: Intensity that is not a number
+- **WHEN** the user enters "abc" as Ergometer's intensity and leaves the field
+- **THEN** the field is marked as invalid and nothing is written for Ergometer
 
 ### Requirement: Sheet text is shown as text
 Exercise names and cell text from the sheet SHALL be displayed as plain text and never interpreted as HTML.
@@ -286,7 +405,7 @@ Selecting a tile SHALL show that exercise's editor below the tiles and mark the 
 - **THEN** no tile is selected and no exercise editor is shown
 
 ### Requirement: "Done today" means at least one set with reps
-An exercise SHALL count as done today when its reps cell for today holds at least one set. The cells counted SHALL be those the exercise would save from the values on screen, as of the last time the user left a field of it or deleted a set. A weight alone SHALL NOT count.
+An exercise SHALL count as done today when its reps cell for today holds at least one set. A timed exercise SHALL count as done today when its time cell for today holds a time, readable or not. The cells counted SHALL be those the exercise would save from the values on screen, as of the last time the user left a field of it or deleted a set. A weight alone, or an intensity alone, SHALL NOT count.
 
 #### Scenario: Reps loaded from the sheet
 - **WHEN** today's row holds "75" and "10" for Latzug
@@ -308,8 +427,20 @@ An exercise SHALL count as done today when its reps cell for today holds at leas
 - **WHEN** today's reps cell for an exercise displays "?, 9, 7"
 - **THEN** the exercise counts as done today
 
+#### Scenario: Time entered
+- **WHEN** Ergometer has no values today and the user types "330" into its time field and leaves it
+- **THEN** Ergometer counts as done today
+
+#### Scenario: Intensity only
+- **WHEN** the user changes Ergometer's intensity but enters no time
+- **THEN** Ergometer does not count as done today
+
+#### Scenario: Unreadable time today
+- **WHEN** today's time cell for Ergometer displays "20 min"
+- **THEN** Ergometer counts as done today
+
 ### Requirement: "Improved" means more reps, heaviest weight first
-An exercise done today SHALL count as improved when it beats last time. For each time, the reps SHALL be added up per weight and listed from the heaviest weight down, except for assisted exercises. The first entry where the lists differ SHALL decide: the heavier weight wins, or at the same weight the larger total. If one list ends first, the other wins. Equal lists SHALL NOT count as improved. A set's weight SHALL be its `@` weight, otherwise the weight cell's, otherwise 0 kg.
+An exercise done today SHALL count as improved when it beats last time. For each time, the reps SHALL be added up per weight and listed from the heaviest weight down, except for assisted exercises. The first entry where the lists differ SHALL decide: the heavier weight wins, or at the same weight the larger total. If one list ends first, the other wins. Equal lists SHALL NOT count as improved. A set's weight SHALL be its `@` weight, otherwise the weight cell's, otherwise 0 kg. A timed exercise SHALL instead be compared by intensity and time.
 
 #### Scenario: Same sets in another order
 - **WHEN** Latzug last held "75" and "9, 11, 9", and today holds "75" and "11, 9, 9"
@@ -369,7 +500,7 @@ An exercise done today SHALL count as improved when it beats last time. For each
 - **THEN** Bankdrücken counts as improved, because both times have 30 reps at 50 kg, and only today has sets at a lighter weight
 
 ### Requirement: "Improved" needs readable cells both times
-An exercise SHALL NOT count as improved when it has no last time, or when its weight or reps cell is unreadable today or last time. It SHALL still count as done today when its reps cell holds a set.
+An exercise SHALL NOT count as improved when it has no last time, or when its weight or reps cell is unreadable today or last time, or for a timed exercise its intensity or time cell. It SHALL still count as done today when its reps cell holds a set, or for a timed exercise when its time cell holds a time.
 
 #### Scenario: Never done before
 - **WHEN** Duale Schulterpresse has no last time and today holds "30" and "12"
@@ -386,6 +517,45 @@ An exercise SHALL NOT count as improved when it has no last time, or when its we
 #### Scenario: Unreadable weight today
 - **WHEN** an exercise last held "20" and "5", and today holds "25 (Seil)" and "10"
 - **THEN** it counts as done today but not as improved
+
+#### Scenario: Unreadable intensity last time
+- **WHEN** Ergometer last held "8 (Stufe)" and "3:30", and today holds "9" and "4:00"
+- **THEN** it counts as done today but not as improved
+
+#### Scenario: Unreadable time today
+- **WHEN** Ergometer last held "8" and "3:30", and today holds "9" and "20 min"
+- **THEN** it counts as done today but not as improved
+
+#### Scenario: Ergometer never done before
+- **WHEN** Ergometer has no last time and today holds "8" and "3:30"
+- **THEN** it counts as done today but not as improved
+
+### Requirement: A timed exercise improves with more intensity, then more time
+A timed exercise done today SHALL count as improved when its intensity is higher than last time, or when its intensity is the same and its time is longer. An empty intensity SHALL count as 0. The same intensity and time as last time SHALL NOT count as improved.
+
+#### Scenario: Higher intensity, shorter time
+- **WHEN** Ergometer last held "8" and "5:00", and today holds "9" and "3:00"
+- **THEN** Ergometer counts as improved, because 9 is a higher intensity than 8
+
+#### Scenario: Same intensity, longer time
+- **WHEN** Ergometer last held "8" and "3:30", and today holds "8" and "4:00"
+- **THEN** Ergometer counts as improved
+
+#### Scenario: Equal to last time
+- **WHEN** Ergometer last held "8" and "3:30", and today holds "8" and "3:30"
+- **THEN** Ergometer counts as done today but not as improved
+
+#### Scenario: Lower intensity, longer time
+- **WHEN** Ergometer last held "8" and "3:30", and today holds "7" and "10:00"
+- **THEN** Ergometer counts as done today but not as improved, because 7 is a lower intensity than 8
+
+#### Scenario: Without an intensity
+- **WHEN** Ergometer last held an empty intensity and "3:30", and today holds an empty intensity and "4:00"
+- **THEN** Ergometer counts as improved
+
+#### Scenario: Turning green
+- **WHEN** Ergometer last held "8" and "3:30", has no values today, and the user types "8" and "400" and leaves the time field
+- **THEN** its tile changes to the "improved" colour
 
 ### Requirement: Assisted exercises improve with less weight
 An exercise whose name contains "(assistiert)", ignoring case, SHALL count as assisted, and its weight SHALL be the assistance it got. For an assisted exercise, the reps per weight SHALL be listed from the lightest weight up, so that at the first difference the lighter weight wins, or at the same weight the larger total. Everything else about "improved" SHALL stay the same. An empty weight SHALL count as 0 kg, meaning no assistance.
@@ -440,8 +610,8 @@ The workout screen SHALL show how many exercises count as done today, including 
 - **WHEN** no exercise has reps today
 - **THEN** the screen shows that 0 exercises are done today
 
-### Requirement: Sixteen exercises have an icon
-The exercises with the German names Bankdrücken, Bauchmaschine, Rückenheben, Bizepsmaschine, Seitheber, Schulterpresse, Trizepspull, Ruderzug, Butterfly, Beinpresse, Klimmzüge, Beinstrecker, Latzug, Duale Schulterpresse, Brustpresse and Crunchmaschine SHALL each have an icon of their own. A header name SHALL get an icon when it equals one of these German names, ignoring upper and lower case and an "(assistiert)" marker. Every other exercise SHALL have no icon.
+### Requirement: Exercises with an icon of their own
+The exercises with the German names Bankdrücken, Bauchmaschine, Rückenheben, Bizepsmaschine, Seitheber, Schulterpresse, Trizepspull, Ruderzug, Butterfly, Beinpresse, Klimmzüge, Beinstrecker, Latzug, Duale Schulterpresse, Brustpresse, Crunchmaschine and Ergometer SHALL each have an icon of their own. Ergometer's icon SHALL show a figure on a stationary bike. A header name SHALL get an icon when it equals one of these German names, ignoring upper and lower case and an "(assistiert)" marker. Every other exercise SHALL have no icon.
 
 #### Scenario: Exercise with an icon
 - **WHEN** the header row names Latzug
@@ -460,8 +630,12 @@ The exercises with the German names Bankdrücken, Bauchmaschine, Rückenheben, B
 - **THEN** its tile shows no icon and the label "Kl"
 
 #### Scenario: Every icon is different
-- **WHEN** the header row names all sixteen exercises
+- **WHEN** the header row names all seventeen exercises
 - **THEN** no two of their tiles show the same icon
+
+#### Scenario: Ergometer
+- **WHEN** the header row names Ergometer
+- **THEN** its tile shows a figure on a stationary bike and no letters
 
 ### Requirement: Assisted Klimmzüge show the assistance
 When Klimmzüge is marked "(assistiert)", its icon SHALL show an upward arrow for the assistance. Without the marker, Klimmzüge SHALL show the same figure without the arrow. No other exercise SHALL show an assistance arrow, with or without the marker.
@@ -479,7 +653,7 @@ When Klimmzüge is marked "(assistiert)", its icon SHALL show an upward arrow fo
 - **THEN** its tile shows the same pull-up figure without the arrow
 
 ### Requirement: "The last workout" is the most recent earlier workout with reps
-The last workout SHALL be the lowest workout row above today's row in which at least one exercise's reps cell holds a set. With no today's row, all workout rows count. The carry-over row SHALL NOT be the last workout. If no workout row qualifies, there SHALL be no last workout. An exercise SHALL count as done in the last workout when its reps cell in that row holds at least one set, readable or not. A weight alone SHALL NOT count.
+The last workout SHALL be the lowest workout row above today's row in which at least one exercise's reps cell holds a set, or a timed exercise's time cell holds a time. With no today's row, all workout rows count. The carry-over row SHALL NOT be the last workout. If no workout row qualifies, there SHALL be no last workout. An exercise SHALL count as done in the last workout when its reps cell in that row holds at least one set, readable or not, or for a timed exercise when its time cell holds a time, readable or not. A weight alone, or an intensity alone, SHALL NOT count.
 
 #### Scenario: Previous workout
 - **WHEN** today is 15.10.2026, there is no today's row, and the lowest workout row is row 13, holding "12.10.2026" with reps for Latzug and Brustpresse
@@ -505,6 +679,14 @@ The last workout SHALL be the lowest workout row above today's row in which at l
 #### Scenario: Start of a year
 - **WHEN** the tab "2027" holds the header row, a carry-over row with reps for Latzug, and no workout row with reps
 - **THEN** there is no last workout, and no exercise counts as done in the last workout
+
+#### Scenario: Only Ergometer
+- **WHEN** today is 15.10.2026, there is no today's row, and the lowest workout row is row 13, holding "12.10.2026" with only "8" and "3:30" for Ergometer
+- **THEN** row 13 is the last workout, and Ergometer counts as done in the last workout
+
+#### Scenario: Ergometer intensity only
+- **WHEN** the last workout holds an intensity for Ergometer and no time
+- **THEN** Ergometer does not count as done in the last workout
 
 ### Requirement: Tiles mark exercises done in the last workout
 A tile in the "not done" state SHALL have a border in the "done" colour when its exercise counts as done in the last workout, and keep the "not done" colour. Tiles in the "done" and "improved" states SHALL NOT show this border. The border SHALL appear and disappear as the tile's state changes. While a tile shows the border, its accessible name SHALL also say that the exercise was done in the last workout.
