@@ -127,9 +127,10 @@ These checks run against the deployed site after 5.3, so they are checked off in
 
   Result (first workout on the deployed site, on the phone):
 
-  - Confetti looked good and ran smoothly. With the exercise tile on screen it came in from the sides, and with the page scrolled further up it came out of the exercise's tile;
+  - Confetti looked good and ran smoothly. When the exercise's tile at the top was out of view (for example while typing in the editor), it came in from both sides; when the tile was on screen, it burst from the tile;
+  - whether the confetti clearly came from the exercise that improved when going straight from the last set to the next exercise's tile was not recorded. This case was checked on `localhost` in 4.2;
   - the phone vibrated at the right moment and the length felt good, so `VIBRATION` stays as it is;
-  - the title link opened the sheet, which the user used to delete a test row from that workout;
+  - the title link opened the sheet, which the user used to delete a test row from that workout. Which tab it opened on, and whether in the Sheets app or the browser, was not recorded. The 2026 tab was checked on desktop in 6.1;
   - the last-time date and its day count were useful at a glance.
 
 ## Workflow follow-up
