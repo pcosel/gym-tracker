@@ -144,7 +144,8 @@ Groups 1–5 are implemented in the git worktree above, on branch `worktree-add-
 These checks run against the deployed site after 5.3, so they are checked off in a follow-up commit.
 
 - [x] 6.1 Read-only check on a desktop browser at `https://pcosel.github.io/gym-tracker/`. Sign in, open History and three exercises' details, and switch between the windows. Then tap one tile and open its detail with the editor's History link, without typing anything on the Today page. Verify that the Network tab shows no request while browsing the history and no `values:batchUpdate` at all, and that the console shows no errors from this app's code.
-- [ ] 6.2 (Manual, user) At the next workout, use the History page on the phone. In this task, record whether the exercise list and the details answered "what should I do next?" and "am I progressing?".
+- [x] 6.2 (Manual, user) At the next workout, use the History page on the phone. In this task, record whether the exercise list and the details answered "what should I do next?" and "am I progressing?".
+  Result: Looks good at a glance, but not examined in depth. Accepted as-is so the change can be archived; any rework will go into a new feature.
 
 ## Workflow follow-up
 
